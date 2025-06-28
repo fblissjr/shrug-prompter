@@ -50,18 +50,20 @@ class DirectorLLMNode:
         else:
             print("WARNING: GEMINI_API_KEY not set. DirectorLLMNode will not work.")
 
+
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "last_frame": ("IMAGE",),
-                "story_arc": ("STRING", {"multiline": True, "default": "A lone astronaut explores a mysterious, glowing alien forest, with the mood slowly turning from wonder to terror."}),
+                "story_arc": ("STRING", {"multiline": True, "default": "A lone astronaut explores a mysterious, glowing alien forest."}),
                 "story_so_far": ("STRING", {"multiline": True, "default": "INITIAL SCENE:"}),
-                "sequence_number": ("INT", {"default": 1, "min": 1, "max": 100}),
+                "sequence_number": ("INT", {"default": 1}),
                 "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
+                "temperature": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "top_p": ("FLOAT", {"default": 0.95, "min": 0.0, "max": 1.0, "step": 0.05}),
             }
         }
-
     RETURN_TYPES = ("STRING", "STRING",)
     RETURN_NAMES = ("next_action_cue", "new_story_so_far",)
     FUNCTION = "decide_next_action"
@@ -72,34 +74,27 @@ class DirectorLLMNode:
         image_np = (image_np * 255).astype(np.uint8)
         return Image.fromarray(image_np)
 
-    def decide_next_action(self, last_frame, story_arc, story_so_far, sequence_number, model):
-        if not self.client_initialized:
-            return ("ERROR: Gemini Client not initialized.", story_so_far)
+    def decide_next_action(self, last_frame, story_arc, story_so_far, sequence_number, model, temperature, top_p):
+            if not self.client_initialized:
+                return ("ERROR: Gemini Client not initialized.", story_so_far)
+            try:
+                generative_model = genai.GenerativeModel(model)
+                pil_image = self.tensor_to_pil(last_frame)
+                full_prompt_to_llm = f"""{DIRECTOR_SYSTEM_PROMPT}\n---\n**Story Arc:** {story_arc}\n**Story So Far:**\n{story_so_far}\n---\nBased on all the above, what is the single action for scene #{sequence_number}?"""
 
-        try:
-            generative_model = genai.GenerativeModel(model)
-            pil_image = self.tensor_to_pil(last_frame)
+                # Use the new config parameter
+                config = types.GenerateContentConfig(
+                    temperature=temperature,
+                    top_p=top_p
+                )
 
-            full_prompt_to_llm = f"""{DIRECTOR_SYSTEM_PROMPT}
-
----
-**Story Arc:** {story_arc}
-**Story So Far:**
-{story_so_far}
-
----
-Based on all the above, what is the single action for scene #{sequence_number}?
-"""
-            response = generative_model.generate_content([full_prompt_to_llm, pil_image])
-
-            next_action = response.text.strip()
-
-            # Update the story state for the next loop iteration
-            new_story = f"{story_so_far}\n{sequence_number}. {next_action}"
-
-            print(f"Director's Decided Action Cue (Seq {sequence_number}): {next_action}")
-
-            return (next_action, new_story,)
+                response = generative_model.generate_content([full_prompt_to_llm, pil_image], generation_config=config)
+                next_action = response.text.strip()
+                new_story = f"{story_so_far}\n{sequence_number}. {next_action}"
+                print(f"Director's Decided Action Cue (Seq {sequence_number}): {next_action}")
+                return (next_action, new_story,)
+            except Exception as e:
+                return (f"ERROR: {e}", story_so_far)
 
         except Exception as e:
             error_message = f"ERROR in DirectorLLMNode: {e}"

@@ -7,6 +7,6 @@ NODE_CLASS_MAPPINGS = {
     "DirectorLLMNode": DirectorLLMNode
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LLMPromptGenerator_VACE": "VACE LLM Prompt Generator",
+    "LLMPromptGenerator_VACE": "LLM Prompt Generator",
     "DirectorLLMNode": "Director LLM Node"
 }

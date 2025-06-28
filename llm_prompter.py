@@ -140,52 +140,35 @@ class LLMPromptGenerator:
         return {
             "required": {
                 "last_frame": ("IMAGE",),
-                "user_input_for_optimization": ("STRING", {"multiline": True, "default": "The astronaut discovers a strange, pulsating plant."}),
-                "system_prompt_template": ("STRING", {"multiline": True, "default": VACE_PROMPT_TEMPLATE}),
-                "sequence_number": ("INT", {"default": 1, "min": 1, "max": 100}),
-                "total_sequences": ("INT", {"default": 8, "min": 1, "max": 100}),
+                "user_input_for_optimization": ("STRING", {"multiline": True}),
+                "sequence_number": ("INT", {"default": 1}),
+                "total_sequences": ("INT", {"default": 8}),
                 "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
+                "temperature": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "system_prompt_template": ("STRING", {"multiline": True, "default": VACE_PROMPT_TEMPLATE, "hidden": True}),
             }
         }
-
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("optimized_prompt",)
     FUNCTION = "generate_prompt"
     CATEGORY = "logic/llm"
 
-    def tensor_to_pil(self, tensor: torch.Tensor) -> Image.Image:
-        image_np = tensor.squeeze(0).cpu().numpy()
-        image_np = (image_np * 255).astype(np.uint8)
-        return Image.fromarray(image_np)
+def generate_prompt(self, last_frame, user_input_for_optimization, sequence_number, total_sequences, model, temperature, system_prompt_template):
+       if not self.client_initialized:
+           return ("ERROR: Gemini Client not initialized.",)
+       try:
+           generative_model = genai.GenerativeModel(model)
+           pil_image = self.tensor_to_pil(last_frame)
+           final_prompt_to_llm = f"""{system_prompt_template}\n---\n**Current Task (Video {sequence_number} of {total_sequences})**\nNow, using the rules and examples above, optimize the following user input based on the provided image.\n\n**User Input:** {user_input_for_optimization}\n**Optimized Prompt:**"""
 
-    def generate_prompt(self, last_frame, user_input_for_optimization, system_prompt_template, sequence_number, total_sequences, model):
-        if not self.client_initialized:
-            return ("ERROR: Gemini Client not initialized. Is GEMINI_API_KEY environment variable set correctly?",)
+           # Use the new config parameter
+           config = types.GenerateContentConfig(
+               temperature=temperature,
+           )
 
-        try:
-            # Initialize the generative model inside the function call
-            generative_model = genai.GenerativeModel(model)
-            pil_image = self.tensor_to_pil(last_frame)
-
-            # This is the final prompt that combines the template with the specific task
-            final_prompt_to_llm = f"""{system_prompt_template}
-
----
-**Current Task (Video {sequence_number} of {total_sequences})**
-Now, using the rules and examples above, optimize the following user input based on the provided image.
-
-**User Input:** {user_input_for_optimization}
-**Optimized Prompt:**"""
-
-            # The API call now sends the full instructions, the current task, and the image
-            response = generative_model.generate_content([final_prompt_to_llm, pil_image])
-
-            optimized_prompt = response.text
-            print(f"LLM Generated Prompt (Seq {sequence_number}/{total_sequences}): {optimized_prompt}")
-
-            return (optimized_prompt,)
-
-        except Exception as e:
-            error_message = f"ERROR calling Gemini API: {e}"
-            print(error_message)
-            return (error_message,)
+           response = generative_model.generate_content([final_prompt_to_llm, pil_image], generation_config=config)
+           optimized_prompt = response.text.strip()
+           print(f"LLM Generated Prompt (Seq {sequence_number}): {optimized_prompt}")
+           return (optimized_prompt,)
+       except Exception as e:
+           return (f"ERROR: {e}",)
