@@ -144,7 +144,8 @@ class LLMPromptGenerator:
                 "sequence_number": ("INT", {"default": 1}),
                 "total_sequences": ("INT", {"default": 8}),
                 "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
-                "temperature": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "temperature": ("FLOAT", {"default": 1, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "top_p": ("FLOAT", {"default": 0.95, "min": 0.0, "max": 1.0, "step": 0.05}),
                 "system_prompt_template": ("STRING", {"multiline": True, "default": VACE_PROMPT_TEMPLATE, "hidden": True}),
             }
         }
