@@ -1,19 +1,12 @@
 # In ComfyUI/custom_nodes/director_llm.py
-
 import torch
 import numpy as np
 from PIL import Image
 import os
-
 try:
     from google import genai
-    print("Google GenAI library loaded successfully for Director node.")
-except ImportError:
-    print("----------------------------------------------------------------")
-    print("ERROR: Google GenAI library not found for Director node.")
-    print("Please ensure it is installed: pip install google-generativeai")
-    print("----------------------------------------------------------------")
-    pass
+    from google.genai import types
+except ImportError: pass
 
 # The system prompt that defines the "Director's" job.
 DIRECTOR_SYSTEM_PROMPT = """You are a creative and logical screenwriter. Your task is to advance a story, one scene at a time. You will be given a high-level 'Story Arc', the 'Story So Far', and the last visual frame from the previous scene.
@@ -60,7 +53,7 @@ class DirectorLLMNode:
                 "story_so_far": ("STRING", {"multiline": True, "default": "INITIAL SCENE:"}),
                 "sequence_number": ("INT", {"default": 1}),
                 "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
-                "temperature": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "temperature": ("FLOAT", {"default": 1, "min": 0.0, "max": 2.0, "step": 0.1}),
                 "top_p": ("FLOAT", {"default": 0.95, "min": 0.0, "max": 1.0, "step": 0.05}),
             }
         }
@@ -95,8 +88,3 @@ class DirectorLLMNode:
                 return (next_action, new_story,)
             except Exception as e:
                 return (f"ERROR: {e}", story_so_far)
-
-        except Exception as e:
-            error_message = f"ERROR in DirectorLLMNode: {e}"
-            print(error_message)
-            return (error_message, story_so_far)

@@ -1,21 +1,12 @@
 # In ComfyUI/custom_nodes/llm_prompter.py
-
 import torch
 import numpy as np
 from PIL import Image
 import os
-
 try:
     from google import genai
     from google.genai import types
-    print("Google GenAI library loaded successfully.")
-except ImportError:
-    print("----------------------------------------------------------------")
-    print("ERROR: Google GenAI library not found.")
-    print("Please install it by running the following command in your terminal:")
-    print("pip install google-generativeai")
-    print("----------------------------------------------------------------")
-    pass
+except ImportError: pass
 
 # This is the master template provided by the user.
 # It's set as the default so the node is pre-configured for the VACE workflow.
