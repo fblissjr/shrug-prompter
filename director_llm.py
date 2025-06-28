@@ -58,7 +58,7 @@ class DirectorLLMNode:
                 "story_arc": ("STRING", {"multiline": True, "default": "A lone astronaut explores a mysterious, glowing alien forest, with the mood slowly turning from wonder to terror."}),
                 "story_so_far": ("STRING", {"multiline": True, "default": "INITIAL SCENE:"}),
                 "sequence_number": ("INT", {"default": 1, "min": 1, "max": 100}),
-                "model": (["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],),
+                "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
             }
         }
 

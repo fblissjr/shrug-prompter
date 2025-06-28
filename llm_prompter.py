@@ -144,7 +144,7 @@ class LLMPromptGenerator:
                 "system_prompt_template": ("STRING", {"multiline": True, "default": VACE_PROMPT_TEMPLATE}),
                 "sequence_number": ("INT", {"default": 1, "min": 1, "max": 100}),
                 "total_sequences": ("INT", {"default": 8, "min": 1, "max": 100}),
-                "model": (["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],),
+                "model": (["gemini-2.5-pro", "gemini-2.5-flash"],),
             }
         }
 
