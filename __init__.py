@@ -1,6 +1,6 @@
-__init__.py
+# __init__.py
 
-from .universal_vlm_prompter import UniversalVLMPrompter
+from .univerisal_vlm_prompter import UniversalVLMPrompter
 from .prompt_template_loader import PromptTemplateLoader
 
 NODE_CLASS_MAPPINGS = {
@@ -9,6 +9,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "UniversalVLMPrompter_Shrug": "Universal VLM Prompter",
-    "PromptTemplateLoader_Shrug": "Prompt Template Loader",
+    "UniversalVLMPrompter_Shrug": "Universal VLM Prompter (Shrug)",
+    "PromptTemplateLoader_Shrug": "Prompt Template Loader (Shrug)",
 }
+
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
