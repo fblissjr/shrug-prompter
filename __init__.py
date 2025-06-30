@@ -1,12 +1,14 @@
-from .llm_prompter import *
-from .director_llm import *
+__init__.py
 
-# --- ComfyUI Boilerplate ---
+from .universal_vlm_prompter import UniversalVLMPrompter
+from .prompt_template_loader import PromptTemplateLoader
+
 NODE_CLASS_MAPPINGS = {
-    "LLMPromptGenerator_VACE": LLMPromptGenerator,
-    "DirectorLLMNode": DirectorLLMNode
+    "UniversalVLMPrompter_Shrug": UniversalVLMPrompter,
+    "PromptTemplateLoader_Shrug": PromptTemplateLoader,
 }
+
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LLMPromptGenerator_VACE": "LLM Prompt Generator",
-    "DirectorLLMNode": "Director LLM Node"
+    "UniversalVLMPrompter_Shrug": "Universal VLM Prompter",
+    "PromptTemplateLoader_Shrug": "Prompt Template Loader",
 }
