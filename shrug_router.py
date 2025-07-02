@@ -20,8 +20,16 @@ async def send_request(provider: str, **kwargs):
 
     # The router dispatches the call to the appropriate module.
     if provider_lower == "openai":
-        # The 'provider' key is for routing and is not needed by the API module.
+        # Remove 'provider' key as it's for routing only
         kwargs.pop('provider', None)
+
+        # Ensure required parameters are present
+        required_params = ['messages', 'api_key', 'base_url', 'llm_model', 'max_tokens', 'temperature', 'top_p']
+        missing_params = [param for param in required_params if param not in kwargs]
+
+        if missing_params:
+            return {"error": {"message": f"Missing required parameters: {missing_params}"}}
+
         return await send_request_openai(**kwargs)
 
     # Example of future expansion:
@@ -30,4 +38,4 @@ async def send_request(provider: str, **kwargs):
     #     return await send_request_gemini(**kwargs)
 
     else:
-        raise ValueError(f"Provider '{provider}' is not supported in the router.")
+        return {"error": {"message": f"Provider '{provider}' is not supported in the router."}}

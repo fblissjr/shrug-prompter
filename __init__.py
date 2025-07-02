@@ -1,10 +1,5 @@
 # __init__.py
 
-# --- Node Class Mappings ---
-# This section imports node classes and maps them to their internal names
-# and display names for ComfyUI. A unique suffix is recommended to avoid
-_# conflicts with other custom node packages.
-
 from .nodes.provider_selector import ShrugProviderSelector
 from .nodes.prompter import ShrugPrompter
 from .nodes.response_parser import ShrugResponseParser

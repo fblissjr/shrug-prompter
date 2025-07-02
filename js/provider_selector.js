@@ -15,7 +15,7 @@ app.registerExtension({
                     this.widgets.find((w) => w.name === name);
 
                 const initializeWidgets = () => {
-                    const modelWidget = findWidget("llm_model");
+                    const modelWidget = findWidget("model");
                     if (modelWidget && modelWidget.type === "STRING") {
                         const originalValue = modelWidget.value;
                         const modelWidgetIndex =
@@ -25,7 +25,7 @@ app.registerExtension({
 
                         const comboWidget = this.addWidget(
                             "COMBO",
-                            "llm_model",
+                            "model",
                             originalValue,
                             () => {},
                             {
