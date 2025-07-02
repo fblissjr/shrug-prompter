@@ -2,13 +2,25 @@
 """
 Test script to verify the Shrug Prompter ComfyUI nodes work with edge-llm server.
 Run this from the shrug-prompter directory.
+
+Usage: python validate_nodes.py
 """
 
 import sys
+import os
 import asyncio
 import requests
-from utils import get_models
-from shrug_router import send_request
+
+# Add current directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from utils import get_models
+    from shrug_router import send_request
+except ImportError as e:
+    print(f"Import error: {e}")
+    print("Make sure you're running this from the shrug-prompter directory")
+    sys.exit(1)
 
 def test_server_connection(base_url="http://localhost:8080"):
     """Test if the edge-llm server is running."""

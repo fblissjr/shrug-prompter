@@ -1,6 +1,12 @@
 # nodes/prompter.py
-from ..utils import tensors_to_base64_list, run_async
-from ..shrug_router import send_request
+try:
+    # Try relative imports first (for ComfyUI)
+    from ..utils import tensors_to_base64_list, run_async
+    from ..shrug_router import send_request
+except ImportError:
+    # Fallback to absolute imports (for standalone testing)
+    from utils import tensors_to_base64_list, run_async
+    from shrug_router import send_request
 
 class ShrugPrompter:
     """

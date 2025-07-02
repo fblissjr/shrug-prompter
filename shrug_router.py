@@ -1,5 +1,11 @@
 # In shrug-prompter/shrug_router.py
-from .api.openai_api import send_request_openai
+try:
+    # Try relative import first (for ComfyUI)
+    from .api.openai_api import send_request_openai
+except ImportError:
+    # Fallback to absolute import (for standalone testing)
+    from api.openai_api import send_request_openai
+
 # As new providers are added, their API modules will be imported here.
 # e.g., from .api.gemini_api import send_request_gemini
 

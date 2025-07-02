@@ -1,9 +1,21 @@
 # __init__.py
 
-from .nodes.provider_selector import ShrugProviderSelector
-from .nodes.prompter import ShrugPrompter
-from .nodes.response_parser import ShrugResponseParser
-from .nodes.prompt_template_loader import PromptTemplateLoader
+# --- Node Class Mappings ---
+# This section imports node classes and maps them to their internal names
+# and display names for ComfyUI. A unique suffix is recommended to avoid
+# conflicts with other custom node packages.
+
+try:
+    from .nodes.provider_selector import ShrugProviderSelector
+    from .nodes.prompter import ShrugPrompter
+    from .nodes.response_parser import ShrugResponseParser
+    from .nodes.prompt_template_loader import PromptTemplateLoader
+except ImportError:
+    # Fallback for testing
+    from nodes.provider_selector import ShrugProviderSelector
+    from nodes.prompter import ShrugPrompter
+    from nodes.response_parser import ShrugResponseParser
+    from nodes.prompt_template_loader import PromptTemplateLoader
 
 NODE_CLASS_MAPPINGS = {
     "ShrugProviderSelector": ShrugProviderSelector,
@@ -21,7 +33,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
-
 # --- Web Server Endpoints ---
 # This section adds a web endpoint to the ComfyUI server that the
 # frontend JavaScript uses to fetch dynamic data.
@@ -29,7 +40,11 @@ __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 try:
     from aiohttp import web
     from server import PromptServer
-    from .utils import get_models
+
+    try:
+        from .utils import get_models
+    except ImportError:
+        from utils import get_models
 
     @PromptServer.instance.routes.get("/shrug/get_models")
     async def get_shrug_models_endpoint(request):
@@ -50,7 +65,9 @@ try:
             print(f"ERROR in /shrug/get_models endpoint: {e}")
             return web.json_response({"error": str(e)}, status=500)
 
-except ImportError:
-    print("Warning: Could not import 'server' or 'aiohttp'. API endpoint for Shrug Prompter not available.")
+    print("--- Shrug Prompter nodes loaded with web endpoints ---")
 
-print("--- Shrug Prompter nodes loaded ---")
+except ImportError as e:
+    print(f"Warning: Could not import ComfyUI server components: {e}")
+    print("API endpoint for Shrug Prompter not available.")
+    print("--- Shrug Prompter nodes loaded (standalone mode) ---")
