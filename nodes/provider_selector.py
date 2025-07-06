@@ -4,7 +4,7 @@ import os
 
 class ShrugProviderSelector:
     """
-    A configuration node to collect API credentials and model specifications.
+    A configuration node to pass API credentials and model specifications.
     It packages these settings into a 'context' dictionary for downstream nodes.
     """
     PROVIDERS = ["openai"]  # This list can be expanded as more providers are supported.
@@ -23,9 +23,12 @@ class ShrugProviderSelector:
                     "multiline": False,
                     "default": os.environ.get("OPENAI_API_KEY", "not-required-for-local")
                 }),
-                # This widget is a placeholder. The accompanying javascript file
-                # will replace it with a dynamic COMBO box at runtime.
-                "llm_model": ("STRING", {"default": "Loading models..."}),
+                # This widget allows manual model entry or dropdown selection
+                # The JS will try to populate it dynamically, but manual entry always works
+                "llm_model": ("STRING", {
+                    "default": "Enter model name (will auto-populate if server is reachable)",
+                    "multiline": False
+                }),
             }
         }
 

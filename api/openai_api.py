@@ -1,10 +1,11 @@
 # In shrug-prompter/api/openai_api.py
 import aiohttp
 import asyncio
+import json
 
 async def send_request_openai(messages, api_key, base_url, llm_model, max_tokens, temperature, top_p, mask=None):
     """
-    Sends a request to an OpenAI-compatible API endpoint (including edge-llm).
+    Sends a request to an OpenAI-compatible API endpoint (including heylookitsllm).
 
     Args:
         messages (list): The list of messages for the chat completion payload.
@@ -26,7 +27,7 @@ async def send_request_openai(messages, api_key, base_url, llm_model, max_tokens
 
     # Only add Authorization header if API key is provided
     # (local servers like edge-llm might not require it)
-    if api_key and api_key.strip():
+    if api_key and api_key.strip() and api_key != "not-required-for-local":
         headers["Authorization"] = f"Bearer {api_key}"
 
     # Prepare payload
@@ -66,14 +67,56 @@ async def send_request_openai(messages, api_key, base_url, llm_model, max_tokens
                 if response.status == 200:
                     try:
                         response_json = await response.json()
-                        print(f"SUCCESS: Received response with {len(response_json.get('choices', []))} choice(s)")
+
+                        # Validate response structure
+                        if not isinstance(response_json, dict):
+                            print(f"WARNING: Response is not a dict: {type(response_json)}")
+                            return {"error": {"message": f"Invalid response type: {type(response_json)}"}}
+
+                        # Check for choices
+                        choices = response_json.get("choices", [])
+                        if not choices:
+                            print("WARNING: No choices in response")
+                            # Some servers return content directly
+                            if "content" in response_json or "text" in response_json:
+                                print("Found direct content, wrapping in standard format")
+                                content = response_json.get("content") or response_json.get("text", "")
+                                response_json = {
+                                    "choices": [{"message": {"content": content, "role": "assistant"}}]
+                                }
+                            else:
+                                print(f"Response keys: {list(response_json.keys())}")
+
+                        print(f"SUCCESS: Received response with {len(choices)} choice(s)")
                         return response_json
-                    except Exception as json_error:
+
+                    except json.JSONDecodeError as json_error:
                         print(f"ERROR: Could not parse JSON response: {json_error}")
                         print(f"Raw response: {response_text[:500]}")
-                        return {"error": {"message": f"Invalid JSON response: {json_error}"}}
+
+                        # Try to handle non-JSON responses (some local servers return plain text)
+                        if response_text.strip():
+                            print("Wrapping plain text response in standard format")
+                            return {
+                                "choices": [{"message": {"content": response_text.strip(), "role": "assistant"}}]
+                            }
+                        else:
+                            return {"error": {"message": f"Invalid JSON response: {json_error}"}}
+
+                    except Exception as parse_error:
+                        print(f"ERROR: Unexpected parsing error: {parse_error}")
+                        return {"error": {"message": f"Response parsing error: {parse_error}"}}
                 else:
                     print(f"ERROR: HTTP {response.status}: {response_text}")
+
+                    # Try to parse error response
+                    try:
+                        error_json = json.loads(response_text)
+                        if isinstance(error_json, dict) and "error" in error_json:
+                            return error_json
+                    except:
+                        pass
+
                     return {"error": {"message": f"HTTP {response.status}: {response_text}"}}
 
     except asyncio.TimeoutError:

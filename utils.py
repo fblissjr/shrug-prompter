@@ -64,8 +64,15 @@ def get_models(provider, api_key, base_url):
     else:
         return [f"Model fetching not implemented for '{provider}'."]
 
-def tensors_to_base64_list(tensor_batch):
-    """Converts a ComfyUI IMAGE or MASK tensor batch to a list of Base64 strings."""
+def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
+    """
+    Converts a ComfyUI IMAGE or MASK tensor batch to a list of Base64 strings.
+    
+    Args:
+        tensor_batch: The tensor batch to convert
+        max_size: Maximum dimension for resizing (to reduce VRAM usage)
+        quality: JPEG quality for compression (when applicable)
+    """
     if tensor_batch is None:
         return []
 
@@ -73,7 +80,14 @@ def tensors_to_base64_list(tensor_batch):
     try:
         for i in range(tensor_batch.shape[0]):
             tensor = tensor_batch[i]
+            
+            # Move to CPU and convert to numpy early to free GPU memory
             image_np = tensor.cpu().numpy()
+            
+            # Clear the original tensor from memory if it was on GPU
+            if tensor.device.type == 'cuda':
+                del tensor
+                torch.cuda.empty_cache()
 
             # Handle different tensor formats (ComfyUI uses HWC format)
             if image_np.ndim == 3:
@@ -108,16 +122,41 @@ def tensors_to_base64_list(tensor_batch):
             else:
                 raise ValueError(f"Unsupported image shape: {image_np.shape}")
 
-            # Create PIL image and convert to base64
+            # Create PIL image
             pil_image = Image.fromarray(image_np, mode=mode)
+            
+            # Resize if too large to reduce memory usage
+            if max(pil_image.size) > max_size:
+                # Calculate new size maintaining aspect ratio
+                ratio = max_size / max(pil_image.size)
+                new_size = tuple(int(dim * ratio) for dim in pil_image.size)
+                pil_image = pil_image.resize(new_size, Image.Resampling.LANCZOS)
+                print(f"Resized image from {image_np.shape} to {new_size} to reduce memory usage")
+
+            # Convert to base64 with compression
             buffer = io.BytesIO()
-            pil_image.save(buffer, format="PNG")
+            
+            # Use JPEG for RGB images to reduce size, PNG for others
+            if mode in ['RGB', 'L']:
+                pil_image.save(buffer, format="JPEG", quality=quality, optimize=True)
+            else:
+                pil_image.save(buffer, format="PNG", optimize=True)
+            
             b64_encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
             b64_list.append(b64_encoded)
+            
+            # Clean up
+            buffer.close()
+            del pil_image, image_np
 
     except Exception as e:
         print(f"ERROR: Failed to convert tensor to base64: {e}")
         print(f"Tensor shape: {tensor_batch.shape if tensor_batch is not None else 'None'}")
+        # Clean up on error
+        if 'tensor' in locals():
+            del tensor
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return []
 
     return b64_list
@@ -138,3 +177,9 @@ def run_async(coro):
     except RuntimeError:
         # No event loop exists, create a new one
         return asyncio.run(coro)
+
+def cleanup_gpu_memory():
+    """Helper function to clean up GPU memory."""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
