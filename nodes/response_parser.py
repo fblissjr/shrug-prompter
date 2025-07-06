@@ -6,13 +6,12 @@ from typing import Any, List, Tuple
 
 class ShrugResponseParser:
     """
-    Parses a VLM response, intelligently unpacking lists for looping workflows
-    based on metadata passed in the context. This makes the workflow behavior
-    driven by the prompt template itself.
+    Parses a VLM response. In list-producing modes, it now outputs a
+    single JSON string to ensure maximum compatibility with other custom nodes.
     """
-    # WHY: This is the most important declaration. It tells ComfyUI that this node's
-    # outputs are lists, which is what allows them to be connected to loopers.
-    OUTPUT_IS_LIST = (True, True, True, True)
+    # WHY: We are back to outputting single items. The first output will be a
+    # string that happens to contain a JSON array.
+    OUTPUT_IS_LIST = (False, False, False, False)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -31,55 +30,46 @@ class ShrugResponseParser:
     FUNCTION = "parse_response"
     CATEGORY = "Shrug Nodes/Parsing"
 
-    def parse_response(self, context, original_image=None, mask_size=256, confidence_threshold=0.5, debug_mode=False):
+    def parse_response(self, context, original_image=None, mask_size=256,
+                      confidence_threshold=0.5, debug_mode=False):
 
-        # WHY: The debug info from the prompter is carried through, so you have a
-        # complete log of the VLM call for each item in the loop.
-        base_debug_info = context.get("debug_info", [])
-        if isinstance(base_debug_info, list) and base_debug_info:
-            base_debug_info = base_debug_info[0].splitlines()
+        debug_info = []
 
-        # WHY: The parser now reads the metadata to determine its strategy.
-        # This makes its behavior explicit and predictable, driven by the template.
-        metadata_str = context.get("vlm_metadata", "{}")
-        try: metadata = json.loads(metadata_str)
-        except: metadata = {}
-        output_type = metadata.get("output_type", "single_string")
-        if debug_mode: base_debug_info.append(f"--- Parser --- \nMetadata Strategy: '{output_type}'")
-
+        # This part remains the same: get the response and handle errors.
         llm_response = context.get("llm_response")
-        if not llm_response: return self._create_error_list("No llm_response in context", base_debug_info, debug_mode)
+        if not llm_response:
+            return ("ERROR: No llm_response in context", self._create_empty_mask(mask_size,mask_size), "", "ERROR: No llm_response in context")
         if isinstance(llm_response, dict) and "error" in llm_response:
-            return self._create_error_list(llm_response["error"].get("message", "Unknown error"), base_debug_info, debug_mode)
+            error_msg = llm_response["error"].get("message", "Unknown error")
+            return (f"ERROR: {error_msg}", self._create_empty_mask(mask_size,mask_size), "", f"ERROR: {error_msg}")
 
+        # WHY: We extract the raw text content, which might be a JSON array string
+        # or a single prompt, and simply return it as is.
         response_text = self._extract_response_text(llm_response).strip()
-        if not response_text: return self._create_error_list("VLM returned empty content", base_debug_info, debug_mode)
-        if debug_mode: base_debug_info.append(f"Raw Response ({len(response_text)} chars): {response_text[:300]}...")
+        if debug_mode:
+            debug_info.append("--- Response Parser ---")
+            debug_info.append(f"Raw VLM Response: {response_text[:500]}...")
 
-        # WHY: This is the core logic branch. Based on the template's metadata,
-        # it decides whether to treat the response as one item or a list of items.
-        results_list = []
-        if output_type == "json_array":
-            results_list = self._unpack_json_array(response_text, base_debug_info, debug_mode)
-        else: # 'single_string' or any other value is treated as one item.
-            results_list = [response_text]
-            if debug_mode: base_debug_info.append("✓ Treating response as a single item based on metadata.")
+        # The node's job is now much simpler. It just outputs the text.
+        # The new JSONStringToList node will handle the list conversion.
+        return (response_text, self._create_empty_mask(mask_size, mask_size), "", "\n".join(debug_info))
 
-        all_prompts, all_masks, all_labels, all_debugs = [], [], [], []
-        h, w = (original_image.shape[1], original_image.shape[2]) if original_image is not None else (mask_size, mask_size)
-
-        for i, item in enumerate(results_list):
-            item_debug = list(base_debug_info)
-            if debug_mode: item_debug.append(f"--- Item {i+1}/{len(results_list)} ---")
-
-            prompt, mask, label = self._parse_single_item(item, h, w, confidence_threshold, item_debug, debug_mode)
-
-            all_prompts.append(prompt)
-            all_masks.append(mask)
-            all_labels.append(label)
-            all_debugs.append("\n".join(item_debug))
-
-        return (all_prompts, all_masks, all_labels, all_debugs)
+    def _extract_response_text(self, resp: Any) -> str:
+        """Robustly extracts text content from various VLM response formats."""
+        if isinstance(resp, str): return resp
+        if not isinstance(resp, dict): return str(resp)
+        # Handle standard OpenAI format
+        choices = resp.get("choices", [])
+        if choices and choices[0].get("message"):
+            content = choices[0]["message"].get("content", "")
+            # Clean markdown for JSON
+            if content.strip().startswith("```json"):
+                content = content.strip()[7:-3].strip()
+            return content
+        # Fallback for other formats
+        for key in ["content", "text", "response", "output"]:
+            if key in resp: return resp[key]
+        return json.dumps(resp)
 
     def _unpack_json_array(self, text: str, debug_info: list, debug: bool) -> list:
         # WHY: This helper is specifically for the 'json_array' mode. It's robust
@@ -121,15 +111,6 @@ class ShrugResponseParser:
     def _create_error_list(self, msg: str, dbg_info: list, dbg_mode: bool) -> tuple:
         if dbg_mode: dbg_info.append(f"ERROR: {msg}")
         return ([msg], [self._create_empty_mask(256, 256)], [""], ["\n".join(dbg_info)])
-
-    def _extract_response_text(self, resp: Any) -> str:
-        if isinstance(resp, str): return resp
-        if not isinstance(resp, dict): return str(resp)
-        choices = resp.get("choices", [])
-        if choices and choices.get("message"): return choices["message"].get("content", "")
-        for key in ["content", "text", "response", "output"]:
-            if key in resp: return resp[key]
-        return json.dumps(resp)
 
     def _create_empty_mask(self, h: int, w: int) -> torch.Tensor:
         return torch.zeros((1, h, w), dtype=torch.float32, device="cpu")
@@ -288,3 +269,37 @@ class ShrugMaskUtilities:
             return torch.clamp(mask1 + mask2_resized, 0, 1)
 
         return torch.clamp(mask1 + mask2, 0, 1)
+
+class JSONStringToList:
+    """
+    A utility node that parses a JSON-formatted string into a ComfyUI list.
+    This is used to explicitly convert the output of a VLM into a list that
+    looping nodes can iterate over.
+    """
+    OUTPUT_IS_LIST = (True,)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "json_string": ("STRING", {"multiline": True}),
+            }
+        }
+
+    RETURN_TYPES = ("*",)
+    RETURN_NAMES = ("LIST",)
+    FUNCTION = "convert_to_list"
+    CATEGORY = "Shrug Nodes/Utilities"
+
+    def convert_to_list(self, json_string: str):
+        try:
+            # WHY: This safely parses the string into a Python list object.
+            data = json.loads(json_string)
+            if not isinstance(data, list):
+                # If the VLM returned a single item instead of a list, wrap it.
+                return ([data],)
+            return (data,)
+        except Exception as e:
+            print(f"ERROR: Could not parse JSON string to list: {e}")
+            # Return a list containing the original string and the error for debugging.
+            return ( [f"JSON PARSE ERROR: {e}", json_string], )
