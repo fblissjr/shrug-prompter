@@ -1,14 +1,18 @@
-# nodes/response_parser.py
+# shrug-prompter/nodes/response_parser.py
 
 import torch
 import json
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, List, Tuple
 
 class ShrugResponseParser:
     """
-    Unified response parser with enhanced parsing, auto-format detection, and debugging.
-    Backward compatible with existing workflows.
+    Parses a VLM response, intelligently unpacking lists for looping workflows
+    based on metadata passed in the context. This makes the workflow behavior
+    driven by the prompt template itself.
     """
+    # WHY: This is the most important declaration. It tells ComfyUI that this node's
+    # outputs are lists, which is what allows them to be connected to loopers.
+    OUTPUT_IS_LIST = (True, True, True, True)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -16,8 +20,7 @@ class ShrugResponseParser:
             "required": {"context": ("*",)},
             "optional": {
                 "original_image": ("IMAGE",),
-                "output_format": (["auto", "text", "detection"], {"default": "auto"}),
-                "mask_size": ("INT", {"default": 256, "min": 64, "max": 2048}),
+                "mask_size": ("INT", {"default": 256}),
                 "confidence_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0}),
                 "debug_mode": ("BOOLEAN", {"default": False}),
             },
@@ -28,323 +31,114 @@ class ShrugResponseParser:
     FUNCTION = "parse_response"
     CATEGORY = "Shrug Nodes/Parsing"
 
-    def parse_response(self, context, original_image=None, output_format="auto",
-                      mask_size=256, confidence_threshold=0.5, debug_mode=False):
-        """Parse response with all enhancements and backward compatibility."""
+    def parse_response(self, context, original_image=None, mask_size=256, confidence_threshold=0.5, debug_mode=False):
 
-        debug_info = []
+        # WHY: The debug info from the prompter is carried through, so you have a
+        # complete log of the VLM call for each item in the loop.
+        base_debug_info = context.get("debug_info", [])
+        if isinstance(base_debug_info, list) and base_debug_info:
+            base_debug_info = base_debug_info[0].splitlines()
 
-        # Extract response from context
+        # WHY: The parser now reads the metadata to determine its strategy.
+        # This makes its behavior explicit and predictable, driven by the template.
+        metadata_str = context.get("vlm_metadata", "{}")
+        try: metadata = json.loads(metadata_str)
+        except: metadata = {}
+        output_type = metadata.get("output_type", "single_string")
+        if debug_mode: base_debug_info.append(f"--- Parser --- \nMetadata Strategy: '{output_type}'")
+
         llm_response = context.get("llm_response")
-        if not llm_response:
-            if debug_mode:
-                debug_info.append("ERROR: No llm_response found in context")
-            print("Error in ShrugResponseParser: No llm_response found in context")
-            return self._create_error_response("No LLM response found", debug_info, debug_mode=debug_mode)
-
-        # Determine dimensions from the original image to ensure alignment
-        if original_image is not None:
-            _, height, width, _ = original_image.shape
-            if debug_mode:
-                debug_info.append(f"Using original image dimensions: {width}x{height}")
-        else:
-            height, width = mask_size, mask_size
-            if debug_mode:
-                debug_info.append(f"Using fallback dimensions: {width}x{height}")
-
-        # Handle error responses early
+        if not llm_response: return self._create_error_list("No llm_response in context", base_debug_info, debug_mode)
         if isinstance(llm_response, dict) and "error" in llm_response:
-            error_info = llm_response["error"]
-            if isinstance(error_info, dict):
-                error_msg = error_info.get("message", "Unknown error from upstream")
-            else:
-                error_msg = str(error_info)
-            if debug_mode:
-                debug_info.append(f"Error in response: {error_msg}")
-            print(f"Error in ShrugResponseParser: {error_msg}")
-            return self._create_error_response(f"ERROR: {error_msg}", debug_info, height, width, debug_mode)
+            return self._create_error_list(llm_response["error"].get("message", "Unknown error"), base_debug_info, debug_mode)
 
-        # Extract response text with robust parsing
-        response_text = self._extract_response_text(llm_response, debug_info, debug_mode)
+        response_text = self._extract_response_text(llm_response).strip()
+        if not response_text: return self._create_error_list("VLM returned empty content", base_debug_info, debug_mode)
+        if debug_mode: base_debug_info.append(f"Raw Response ({len(response_text)} chars): {response_text[:300]}...")
 
-        if not response_text:
-            if debug_mode:
-                debug_info.append("ERROR: Empty response content")
-            print("Error in ShrugResponseParser: Received empty content from VLM.")
-            return self._create_error_response("ERROR: Received empty content from VLM.", debug_info, height, width, debug_mode)
+        # WHY: This is the core logic branch. Based on the template's metadata,
+        # it decides whether to treat the response as one item or a list of items.
+        results_list = []
+        if output_type == "json_array":
+            results_list = self._unpack_json_array(response_text, base_debug_info, debug_mode)
+        else: # 'single_string' or any other value is treated as one item.
+            results_list = [response_text]
+            if debug_mode: base_debug_info.append("✓ Treating response as a single item based on metadata.")
 
-        # Clean up response text
-        response_text = response_text.strip()
-        if debug_mode:
-            debug_info.append(f"Extracted text: {len(response_text)} characters")
+        all_prompts, all_masks, all_labels, all_debugs = [], [], [], []
+        h, w = (original_image.shape[1], original_image.shape[2]) if original_image is not None else (mask_size, mask_size)
 
-        # Determine output format
-        if output_format == "auto":
-            detected_format = self._detect_format(response_text)
-            if debug_mode:
-                debug_info.append(f"Auto-detected format: {detected_format}")
-        else:
-            detected_format = output_format
-            if debug_mode:
-                debug_info.append(f"Using specified format: {detected_format}")
+        for i, item in enumerate(results_list):
+            item_debug = list(base_debug_info)
+            if debug_mode: item_debug.append(f"--- Item {i+1}/{len(results_list)} ---")
 
-        # Process based on format
-        if detected_format == "detection":
-            result = self._parse_detection(response_text, height, width, confidence_threshold, debug_info, debug_mode)
-            if result:
-                if debug_mode:
-                    debug_info.append("✓ Successfully parsed detection")
-                return result
+            prompt, mask, label = self._parse_single_item(item, h, w, confidence_threshold, item_debug, debug_mode)
 
-        # Default to text output
-        if debug_mode:
-            debug_info.append("→ Returning as optimized prompt")
-        empty_mask = self._create_empty_mask(height, width)
-        debug_output = "\n".join(debug_info) if debug_mode else ""
-        return (response_text, empty_mask, "", debug_output)
+            all_prompts.append(prompt)
+            all_masks.append(mask)
+            all_labels.append(label)
+            all_debugs.append("\n".join(item_debug))
 
-    def _extract_response_text(self, llm_response: Any, debug_info: List[str], debug_mode: bool) -> str:
-        """Robustly extract text content from various response formats."""
+        return (all_prompts, all_masks, all_labels, all_debugs)
+
+    def _unpack_json_array(self, text: str, debug_info: list, debug: bool) -> list:
+        # WHY: This helper is specifically for the 'json_array' mode. It's robust
+        # against common VLM quirks like wrapping JSON in markdown blocks.
+        if text.strip().startswith("```json"): text = text.strip()[7:-3].strip()
         try:
-            # Handle string responses directly
-            if isinstance(llm_response, str):
-                if debug_mode:
-                    debug_info.append("Response format: plain string")
-                return llm_response
-
-            # Handle dict responses
-            if not isinstance(llm_response, dict):
-                if debug_mode:
-                    debug_info.append(f"WARNING: Unexpected response type: {type(llm_response)}")
-                return str(llm_response)
-
-            if debug_mode:
-                debug_info.append("Response format: dictionary")
-
-            # Try OpenAI format first
-            choices = llm_response.get("choices", [])
-            if choices and len(choices) > 0:
-                choice = choices[0]
-
-                if not isinstance(choice, dict):
-                    if debug_mode:
-                        debug_info.append(f"WARNING: Choice is not a dict: {type(choice)}")
-                    return str(choice)
-
-                # Handle different choice formats
-                if "message" in choice:
-                    # Standard OpenAI format
-                    message = choice["message"]
-                    if isinstance(message, dict):
-                        content = message.get("content", "")
-                        if debug_mode:
-                            debug_info.append("Extracted from: choices[0].message.content")
-                        return content
-                    else:
-                        return str(message)
-                elif "delta" in choice:
-                    # Streaming format that got collected
-                    delta = choice["delta"]
-                    if isinstance(delta, dict):
-                        content = delta.get("content", "")
-                        if debug_mode:
-                            debug_info.append("Extracted from: choices[0].delta.content")
-                        return content
-                    else:
-                        return str(delta)
-                elif "text" in choice:
-                    # Alternative format
-                    if debug_mode:
-                        debug_info.append("Extracted from: choices[0].text")
-                    return choice["text"]
-
-            # Try alternative response formats
-            for key in ["content", "text", "response", "output"]:
-                if key in llm_response:
-                    if debug_mode:
-                        debug_info.append(f"Extracted from: {key}")
-                    return llm_response[key]
-
-            if debug_mode:
-                debug_info.append(f"WARNING: No recognized content field in response")
-            return str(llm_response)
-
+            data = json.loads(text)
+            if isinstance(data, list):
+                if debug: debug_info.append(f"✓ Parsed JSON array with {len(data)} items.")
+                return data
+            if isinstance(data, dict) and len(data) == 1 and isinstance(next(iter(data.values())), list):
+                if debug: debug_info.append(f"✓ Extracted list from JSON object: {len(next(iter(data.values())))} items.")
+                return next(iter(data.values()))
+            if debug: debug_info.append("⚠️ VLM returned a JSON object, not an array. Using as single item.")
+            return [data] # It's valid JSON, but not a list.
         except Exception as e:
-            if debug_mode:
-                debug_info.append(f"ERROR extracting response text: {e}")
-            print(f"ERROR parsing response: {e}")
-            return ""
+            if debug: debug_info.append(f"✗ FAILED to parse JSON array: {e}. Returning raw text.")
+            return [text]
 
-    def _detect_format(self, response_text: str) -> str:
-        """Auto-detect the response format."""
-        # Look for JSON patterns
-        if '{' in response_text and '}' in response_text:
-            try:
-                json_start = response_text.find('{')
-                json_end = response_text.rfind('}')
-                if json_start != -1 and json_end > json_start:
-                    json_text = response_text[json_start:json_end+1]
-                    data = json.loads(json_text)
+    def _parse_single_item(self, item: Any, h: int, w: int, thresh: float, dbg_info: list, dbg: bool) -> tuple:
+        # WHY: This function now simplifies the output logic. The main `OPTIMIZED_PROMPT`
+        # is ALWAYS the string version of the item. This is predictable. It will
+        # *also* try to create a MASK if the item is a valid detection, providing
+        # extra utility without complicating the primary output.
+        prompt_text = json.dumps(item, indent=2) if isinstance(item, dict) else str(item)
+        if dbg: dbg_info.append(f"  - Item Content: {prompt_text[:150]}...")
 
-                    if isinstance(data, dict):
-                        # Check for detection format
-                        if "box" in data and "label" in data:
-                            return "detection"
-                        # Check for structured data
-                        elif any(key in data for key in ["objects", "detections", "results"]):
-                            return "detection"
-            except json.JSONDecodeError:
-                pass
+        mask = self._create_empty_mask(h, w)
+        label = ""
+        if isinstance(item, dict) and "box" in item:
+            box, l, conf = item.get("box",[]), item.get("label","?"), item.get("confidence",1.0)
+            if conf >= thresh and len(box) == 4:
+                mask = self._create_detection_mask(box, box, box, box, h, w)
+                label = f"{l} ({conf:.2f})"
+                if dbg: dbg_info.append(f"  - Parsed as valid detection for '{label}' and created mask.")
 
-        return "text"
+        return (prompt_text, mask, label)
 
-    def _parse_detection(self, response_text: str, height: int, width: int,
-                        confidence_threshold: float, debug_info: List[str], debug_mode: bool) -> Optional[Tuple]:
-        """Parse object detection response format."""
-        try:
-            # Try to find JSON in the response (might have extra text around it)
-            json_start = response_text.find('{')
-            json_end = response_text.rfind('}')
+    def _create_error_list(self, msg: str, dbg_info: list, dbg_mode: bool) -> tuple:
+        if dbg_mode: dbg_info.append(f"ERROR: {msg}")
+        return ([msg], [self._create_empty_mask(256, 256)], [""], ["\n".join(dbg_info)])
 
-            if json_start == -1 or json_end == -1 or json_end <= json_start:
-                return None
+    def _extract_response_text(self, resp: Any) -> str:
+        if isinstance(resp, str): return resp
+        if not isinstance(resp, dict): return str(resp)
+        choices = resp.get("choices", [])
+        if choices and choices.get("message"): return choices["message"].get("content", "")
+        for key in ["content", "text", "response", "output"]:
+            if key in resp: return resp[key]
+        return json.dumps(resp)
 
-            json_text = response_text[json_start:json_end+1]
-            detection_data = json.loads(json_text)
+    def _create_empty_mask(self, h: int, w: int) -> torch.Tensor:
+        return torch.zeros((1, h, w), dtype=torch.float32, device="cpu")
 
-            if not isinstance(detection_data, dict):
-                return None
-
-            # Handle single detection
-            if "box" in detection_data and "label" in detection_data:
-                return self._process_single_detection(detection_data, height, width, confidence_threshold, debug_info, debug_mode)
-
-            # Handle multiple detections
-            elif "detections" in detection_data or "objects" in detection_data:
-                detections = detection_data.get("detections", detection_data.get("objects", []))
-                return self._process_multiple_detections(detections, height, width, confidence_threshold, debug_info, debug_mode)
-
-            return None
-
-        except (json.JSONDecodeError, TypeError, ValueError) as e:
-            if debug_mode:
-                debug_info.append(f"Detection parsing error: {e}")
-            # If not a valid detection JSON, pass it through as a text prompt
-            return None
-
-    def _process_single_detection(self, detection_data: Dict, height: int, width: int,
-                                 confidence_threshold: float, debug_info: List[str], debug_mode: bool) -> Tuple:
-        """Process a single detection."""
-        box = detection_data.get("box", [])
-        label = detection_data.get("label", "unknown")
-        confidence = detection_data.get("confidence", 1.0)
-
-        if confidence < confidence_threshold:
-            if debug_mode:
-                debug_info.append(f"Detection below confidence threshold: {confidence:.2f} < {confidence_threshold:.2f}")
-            empty_mask = self._create_empty_mask(height, width)
-            return ("Low confidence detection", empty_mask, f"{label} ({confidence:.2f})")
-
-        if label == "not_found" or not box or len(box) != 4:
-            if debug_mode:
-                debug_info.append("Object not found or invalid box")
-            empty_mask = self._create_empty_mask(height, width)
-            return ("Object not found.", empty_mask, label)
-
-        try:
-            x1, y1, x2, y2 = map(int, box)
-            if debug_mode:
-                debug_info.append(f"Detection box: [{x1}, {y1}, {x2}, {y2}]")
-
-            # Ensure coordinates are within image bounds
-            x1 = max(0, min(x1, width))
-            y1 = max(0, min(y1, height))
-            x2 = max(x1, min(x2, width))
-            y2 = max(y1, min(y2, height))
-
-            # Create mask tensor
-            mask_tensor = self._create_detection_mask(x1, y1, x2, y2, height, width)
-
-            confidence_str = f" ({confidence:.2f})" if confidence < 1.0 else ""
-            return ("", mask_tensor, f"{label}{confidence_str}")
-
-        except (ValueError, TypeError) as e:
-            if debug_mode:
-                debug_info.append(f"ERROR: Invalid box coordinates: {box}, error: {e}")
-            print(f"ERROR: Invalid box coordinates: {box}, error: {e}")
-            empty_mask = self._create_empty_mask(height, width)
-            return (f"ERROR: Invalid detection box: {box}", empty_mask, "")
-
-    def _process_multiple_detections(self, detections: List, height: int, width: int,
-                                   confidence_threshold: float, debug_info: List[str], debug_mode: bool) -> Tuple:
-        """Process multiple detections and combine masks."""
-        if not detections:
-            empty_mask = self._create_empty_mask(height, width)
-            return ("No detections found", empty_mask, "")
-
-        valid_detections = []
-        combined_mask = torch.zeros((1, height, width), dtype=torch.float32, device="cpu")
-
-        for i, detection in enumerate(detections):
-            if not isinstance(detection, dict):
-                continue
-
-            confidence = detection.get("confidence", 1.0)
-            if confidence < confidence_threshold:
-                continue
-
-            box = detection.get("box", [])
-            label = detection.get("label", f"object_{i}")
-
-            if len(box) == 4:
-                try:
-                    x1, y1, x2, y2 = map(int, box)
-
-                    # Ensure coordinates are within bounds
-                    x1 = max(0, min(x1, width))
-                    y1 = max(0, min(y1, height))
-                    x2 = max(x1, min(x2, width))
-                    y2 = max(y1, min(y2, height))
-
-                    if x2 > x1 and y2 > y1:  # Valid box
-                        combined_mask[:, y1:y2, x1:x2] = 1.0
-                        valid_detections.append(f"{label}({confidence:.2f})")
-
-                except (ValueError, TypeError):
-                    continue
-
-        if debug_mode:
-            debug_info.append(f"Combined {len(valid_detections)} detections")
-
-        if valid_detections:
-            labels = ", ".join(valid_detections)
-            return ("", combined_mask, labels)
-        else:
-            empty_mask = self._create_empty_mask(height, width)
-            return ("No valid detections above threshold", empty_mask, "")
-
-    def _create_empty_mask(self, height: int, width: int) -> torch.Tensor:
-        """Create an empty mask tensor with proper memory management."""
-        return torch.zeros((1, height, width), dtype=torch.float32, device="cpu")
-
-    def _create_detection_mask(self, x1: int, y1: int, x2: int, y2: int,
-                              height: int, width: int) -> torch.Tensor:
-        """Create a detection mask tensor with proper bounds checking."""
-        mask_tensor = torch.zeros((1, height, width), dtype=torch.float32, device="cpu")
-        if x2 > x1 and y2 > y1:  # Valid box
-            mask_tensor[:, y1:y2, x1:x2] = 1.0
-        return mask_tensor
-
-    def _create_error_response(self, error_msg: str, debug_info: List[str],
-                              height: int = None, width: int = None, debug_mode: bool = False) -> Tuple:
-        """Create a standardized error response."""
-        if height is None or width is None:
-            height, width = 256, 256  # Smaller default to save VRAM
-
-        empty_mask = self._create_empty_mask(height, width)
-        debug_output = "\n".join(debug_info) if debug_mode else ""
-        return (error_msg, empty_mask, "", debug_output)
-
+    def _create_detection_mask(self, x1, y1, x2, y2, h, w) -> torch.Tensor:
+        mask = self._create_empty_mask(h, w)
+        if x2 > x1 and y2 > y1:
+            mask[:, int(y1):int(y2), int(x1):int(x2)] = 1.0
+        return mask
 
 class ShrugMaskUtilities:
     """
