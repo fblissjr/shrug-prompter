@@ -1,15 +1,18 @@
+# In shrug-prompter/__init__.py
+
 from .nodes.provider_selector import ShrugProviderSelector
 from .nodes.prompter import ShrugPrompter
-from .nodes.response_parser import ShrugResponseParser, ShrugMaskUtilities, JSONStringToList
+from .nodes.response_parser import ShrugResponseParser, JSONStringToList
 from .nodes.prompt_template_loader import PromptTemplateLoader
+from .nodes.mask_utils import ShrugMaskUtilities # <--- CORRECTED IMPORT
 
 NODE_CLASS_MAPPINGS = {
     "ShrugProviderSelector": ShrugProviderSelector,
     "ShrugPrompter": ShrugPrompter,
     "ShrugResponseParser": ShrugResponseParser,
     "PromptTemplateLoader_Shrug": PromptTemplateLoader,
-    "ShrugMaskUtilities": ShrugMaskUtilities,
     "JSONStringToList": JSONStringToList,
+    "ShrugMaskUtilities": ShrugMaskUtilities, # <--- Correctly registered
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -17,21 +20,14 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ShrugPrompter": "VLM Prompter (Shrug)",
     "ShrugResponseParser": "Response Parser (Shrug)",
     "PromptTemplateLoader_Shrug": "Prompt Template Loader (Shrug)",
+    "JSONStringToList": "JSON String to List",
     "ShrugMaskUtilities": "Mask Utilities (Shrug)",
-    "JSONStringToList": "JSON String to List (Shrug)",
 }
 
-# WHY: This is required to load the JavaScript file(s) for your nodes.
-# Even though we removed one JS file, we still need this for provider_selector.js.
 WEB_DIRECTORY = "./js"
-
-# WHY: We no longer need to include the web server endpoints in the node's __init__.py,
-# as that logic belongs to the heylookitsanllm server, not the ComfyUI custom node.
-# The custom node is a client to that server.
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']
 
-print("Shrug Prompter (Metadata-Driven) nodes loaded.")
-
+print("✓ Shrug Prompter (v3 - Final) nodes loaded.")
 # --- Web Server Endpoints ---
 # Enhanced endpoint with caching and better error handling to complement
 # the improved frontend JavaScript.
