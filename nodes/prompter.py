@@ -136,17 +136,17 @@ class ShrugPrompter:
                 debug_info.append("📊 Performance Metrics:")
                 for key, value in metrics.items():
                     if key == 'tokens_per_sec':
-                        debug_info.append(f"  ⚡ Processing speed: {value}")
+                        debug_info.append(f"  Processing speed: {value}")
                     elif key == 'load_time':
-                        debug_info.append(f"  🔄 Model load time: {value}")
+                        debug_info.append(f"  Model load time: {value}")
                     elif key == 'inference_time':
-                        debug_info.append(f"  🧠 Inference time: {value}")
+                        debug_info.append(f"  Inference time: {value}")
                     elif key == 'total_time':
-                        debug_info.append(f"  ⏱️ Total time: {value}")
+                        debug_info.append(f"  Total time: {value}")
                     elif key == 'response_tokens':
-                        debug_info.append(f"  📝 Response: {value}")
+                        debug_info.append(f"  Response: {value}")
                     elif key == 'prompt_tokens':
-                        debug_info.append(f"  📋 Prompt: {value}")
+                        debug_info.append(f"  Prompt: {value}")
 
         except Exception as e:
             debug_info.append(f"Note: Could not extract performance metrics: {e}")
@@ -215,10 +215,10 @@ class ShrugPrompter:
         # Store debug info if debug mode is enabled
         if debug_mode:
             context["debug_info"] = debug_info
-        
+
         # Return debug info as visible output
         debug_output = "\n".join(debug_info) if debug_mode and debug_info else ""
-        
+
         return (context, debug_output)
 
     def _parse_template_vars(self, template_vars, debug_info, debug_mode):

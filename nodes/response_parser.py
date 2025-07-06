@@ -335,7 +335,7 @@ class ShrugResponseParser:
             mask_tensor[:, y1:y2, x1:x2] = 1.0
         return mask_tensor
 
-    def _create_error_response(self, error_msg: str, debug_info: List[str], 
+    def _create_error_response(self, error_msg: str, debug_info: List[str],
                               height: int = None, width: int = None, debug_mode: bool = False) -> Tuple:
         """Create a standardized error response."""
         if height is None or width is None:
@@ -351,7 +351,7 @@ class ShrugMaskUtilities:
     Utility node for advanced mask operations and transformations.
     Part of the unified shrug-prompter system.
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -373,26 +373,26 @@ class ShrugMaskUtilities:
 
     def process_mask(self, mask, operation, target_size=512, additional_mask=None, kernel_size=3):
         """Process mask with various operations."""
-        
+
         info = []
-        
+
         try:
             if operation == "resize":
                 result_mask = self._resize_mask(mask, target_size)
                 info.append(f"Resized mask to {target_size}x{target_size}")
-            
+
             elif operation == "crop":
                 result_mask = self._crop_mask(mask)
                 info.append("Cropped mask to bounding box")
-            
+
             elif operation == "dilate":
                 result_mask = self._dilate_mask(mask, kernel_size)
                 info.append(f"Dilated mask with kernel size {kernel_size}")
-            
+
             elif operation == "erode":
                 result_mask = self._erode_mask(mask, kernel_size)
                 info.append(f"Eroded mask with kernel size {kernel_size}")
-            
+
             elif operation == "combine":
                 if additional_mask is not None:
                     result_mask = self._combine_masks(mask, additional_mask)
@@ -400,13 +400,13 @@ class ShrugMaskUtilities:
                 else:
                     result_mask = mask
                     info.append("No additional mask provided for combine operation")
-            
+
             else:
                 result_mask = mask
                 info.append(f"Unknown operation: {operation}")
-            
+
             return (result_mask, "\n".join(info))
-            
+
         except Exception as e:
             info.append(f"Error in {operation}: {e}")
             return (mask, "\n".join(info))
@@ -414,75 +414,75 @@ class ShrugMaskUtilities:
     def _resize_mask(self, mask: torch.Tensor, target_size: int) -> torch.Tensor:
         """Resize mask to target size."""
         import torch.nn.functional as F
-        
+
         # Get current size
         _, h, w = mask.shape
-        
+
         if h == target_size and w == target_size:
             return mask
-        
+
         # Resize using nearest neighbor to preserve binary values
         resized = F.interpolate(
             mask.unsqueeze(0),  # Add batch dimension
             size=(target_size, target_size),
             mode='nearest'
         ).squeeze(0)  # Remove batch dimension
-        
+
         return resized
 
     def _crop_mask(self, mask: torch.Tensor) -> torch.Tensor:
         """Crop mask to its bounding box."""
         # Find bounding box of non-zero values
         nonzero_indices = torch.nonzero(mask.squeeze())
-        
+
         if len(nonzero_indices) == 0:
             return mask  # Empty mask, return as-is
-        
+
         min_y, min_x = nonzero_indices.min(dim=0)[0]
         max_y, max_x = nonzero_indices.max(dim=0)[0]
-        
+
         # Crop to bounding box
         cropped = mask[:, min_y:max_y+1, min_x:max_x+1]
-        
+
         return cropped
 
     def _dilate_mask(self, mask: torch.Tensor, kernel_size: int) -> torch.Tensor:
         """Dilate mask using morphological operation."""
         import torch.nn.functional as F
-        
+
         # Create dilation kernel
         kernel = torch.ones(1, 1, kernel_size, kernel_size)
-        
+
         # Apply dilation using convolution
         dilated = F.conv2d(
             mask.unsqueeze(0),  # Add batch and channel dimensions
             kernel,
             padding=kernel_size // 2
         ).squeeze(0)  # Remove batch and channel dimensions
-        
+
         # Clamp to binary values
         dilated = (dilated > 0).float()
-        
+
         return dilated
 
     def _erode_mask(self, mask: torch.Tensor, kernel_size: int) -> torch.Tensor:
         """Erode mask using morphological operation."""
         import torch.nn.functional as F
-        
+
         # Create erosion kernel
         kernel = torch.ones(1, 1, kernel_size, kernel_size)
-        
+
         # Apply erosion by checking if all kernel values match
         eroded = F.conv2d(
             mask.unsqueeze(0),  # Add batch and channel dimensions
             kernel,
             padding=kernel_size // 2
         ).squeeze(0)  # Remove batch and channel dimensions
-        
+
         # Erosion: only keep pixels where all kernel positions were 1
         kernel_sum = kernel_size * kernel_size
         eroded = (eroded == kernel_sum).float()
-        
+
         return eroded
 
     def _combine_masks(self, mask1: torch.Tensor, mask2: torch.Tensor) -> torch.Tensor:
@@ -492,5 +492,5 @@ class ShrugMaskUtilities:
             # Resize mask2 to match mask1
             mask2_resized = self._resize_mask(mask2, mask1.shape[-1])
             return torch.clamp(mask1 + mask2_resized, 0, 1)
-        
+
         return torch.clamp(mask1 + mask2, 0, 1)

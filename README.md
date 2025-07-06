@@ -1,14 +1,14 @@
-# 🚀 Shrug-Prompter: Unified VLM Integration for ComfyUI
+# Shrug-Prompter: Unified VLM Integration for ComfyUI
 
 A comprehensive Vision-Language Model (VLM) integration system for ComfyUI with more intelligent prompt optimization, object detection, template support, and performance optimizations. Optimized for Wan2.1, Flux Kontext, and general purpose. Goes well with my other project, an MLX/llama.cpp server with hot swappable models and ollama api compatibility, (heylookitsanllm)https://github.com/fblissjr/heylookitsanllm]
 
 ## What This Does
 
-### 🎯 **Dual-Mode Operation**
+### **Dual-Mode Operation**
 1. **Prompt Optimization**: Transform basic prompts into detailed, optimized versions for image generation
 2. **Object Detection**: Find and localize objects in images with precise bounding box masks
 
-### 🔧 **Key Features**
+### **Features**
 - **Dynamic model loading**: Auto-fetch available models from your VLM / LLM server
 - **Template system**: Includes dataset-optimized templates for various tasks, including flux kontext, wan2.1, and general purpose
 - **Smart caching**: Reduce redundant API calls with built-in response caching
@@ -37,7 +37,7 @@ cd ComfyUI/custom_nodes/
 ### 3. **Start ComfyUI**
 Restart ComfyUI and the nodes will appear in the **"Shrug Nodes"** category.
 
-## 🎮 Quick Start
+## Quick Start
 
 ### **Basic Workflow**
 ```
@@ -176,11 +176,11 @@ Enable `debug_mode` on both nodes to see:
 - Response format detection
 - **Performance metrics from heylookitsanllm**:
   ```
-  📊 Performance Metrics:
-    ⚡ Processing speed: 24.3 tok/s
-    🔄 Model load time: 1.2s
-    🧠 Inference time: 6.4s
-    📝 Response: 156 tokens
+  Performance Metrics:
+    Processing speed: 24.3 tok/s
+    Model load time: 1.2s
+    Inference time: 6.4s
+    Response: 156 tokens
   ✓ Using cached response
   ✓ Templates processed
   ```
@@ -200,12 +200,12 @@ Enable `debug_mode` on both nodes to see:
 - Session-persistent storage
 
 **How Caching Works:**
-- 💾 When `use_cache=True` (default), responses are cached based on:
+- When `use_cache=True` (default), responses are cached based on:
   - Model name, prompts, parameters, image signatures
   - Same inputs = instant cached response (no API call)
-- ⚡ **Benefits**: Faster iteration during workflow development
-- 🗑️ **Clears**: When ComfyUI restarts or cache gets too large
-- 👁️ **Debug**: Enable `debug_mode=True` to see cache hits/misses
+- **Benefits**: Faster iteration during workflow development
+- **Clears**: When ComfyUI restarts or cache gets too large
+- **Debug**: Enable `debug_mode=True` to see cache hits/misses
 
 *Example debug output:*
 ```
@@ -242,7 +242,7 @@ Enable new features by setting optional inputs:
 - `debug_mode`: See detailed processing info (default: False)
 - `confidence_threshold`: Filter low-confidence detections
 
-## 🔧 Configuration Examples
+## Configuration Examples
 
 ### **For Local heylookitsanllm Server:**
 ```
@@ -282,7 +282,7 @@ Model: gpt-3000-vision-preview_2079_whatyearisthis
 }
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### **Models not loading**
 - Check your VLM server is running and accessible
