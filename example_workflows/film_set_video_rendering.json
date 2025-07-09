@@ -1,0 +1,364 @@
+{
+  "last_node_id": 15,
+  "last_link_id": 30,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "StringConstant",
+      "pos": [-800, -500],
+      "size": {"0": 600, "1": 200},
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": [1], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Pipe-Separated Screenplay",
+      "properties": {"Node name for S&R": "StringConstant"},
+      "widgets_values": ["The camera holds steady as the woman gracefully rises from her chair, soft morning light filtering through the window | In a medium wide shot, the person sits on the edge of the bed, scrolling through their phone | The camera follows in a smooth tracking motion as she approaches the front door | A wide establishing shot reveals the bustling city street outside | The final shot shows the character stepping into natural sunlight, connecting with the environment"]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [-800, -250],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [2], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Start Frame",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["start_frame.jpg", "image"]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [-450, -250],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [3], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "End Frame",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["end_frame.jpg", "image"]
+    },
+    {
+      "id": 4,
+      "type": "WanVideoVACEStartToEndFrame",
+      "pos": [-100, -300],
+      "size": {"0": 270, "1": 190},
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "start_image", "type": "IMAGE", "link": 2},
+        {"name": "end_image", "type": "IMAGE", "link": 3}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "links": [4], "shape": 3, "slot_index": 0},
+        {"name": "masks", "type": "MASK", "links": [5], "shape": 3, "slot_index": 1}
+      ],
+      "title": "VACE Frame Generation",
+      "properties": {"Node name for S&R": "WanVideoVACEStartToEndFrame"},
+      "widgets_values": [64, 0.5, 0, -1]
+    },
+    {
+      "id": 5,
+      "type": "WanVideoTextEncode",
+      "pos": [200, -500],
+      "size": {"0": 350, "1": 250},
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "positive_prompt", "type": "STRING", "link": 1}
+      ],
+      "outputs": [
+        {"name": "text_embeds", "type": "WANVIDEOTEXTEMBEDS", "links": [6], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Text Encode Screenplay",
+      "properties": {"Node name for S&R": "WanVideoTextEncode"},
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        true
+      ],
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 6,
+      "type": "WanVideoVACEEncode",
+      "pos": [200, -200],
+      "size": {"0": 350, "1": 282},
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "input_frames", "type": "IMAGE", "link": 4},
+        {"name": "input_masks", "type": "MASK", "link": 5}
+      ],
+      "outputs": [
+        {"name": "vace_embeds", "type": "WANVIDIMAGE_EMBEDS", "links": [7], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VACE Encode",
+      "properties": {"Node name for S&R": "WanVideoVACEEncode"},
+      "widgets_values": [480, 832, 64, 0.65, 0, 1, false],
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 7,
+      "type": "WanVideoContextOptions",
+      "pos": [600, -500],
+      "size": {"0": 300, "1": 150},
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "outputs": [
+        {"name": "context_options", "type": "WANVIDEOCONTEXTOPTIONS", "links": [8], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Context Options (KEY!)",
+      "properties": {"Node name for S&R": "WanVideoContextOptions"},
+      "widgets_values": [81, 16],
+      "color": "#ff6b6b",
+      "bgcolor": "#ff8e8e"
+    },
+    {
+      "id": 8,
+      "type": "WanVideoSampler",
+      "pos": [600, -300],
+      "size": {"0": 320, "1": 618},
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "image_embeds", "type": "WANVIDIMAGE_EMBEDS", "link": 7},
+        {"name": "text_embeds", "type": "WANVIDEOTEXTEMBEDS", "link": 6},
+        {"name": "context_options", "type": "WANVIDEOCONTEXTOPTIONS", "link": 8}
+      ],
+      "outputs": [
+        {"name": "samples", "type": "LATENT", "links": [9], "shape": 3, "slot_index": 0}
+      ],
+      "title": "WAN Sampler with Context",
+      "properties": {"Node name for S&R": "WanVideoSampler"},
+      "widgets_values": [
+        8, 1.0, 5.0, 11, "fixed", true, "euler", 0, 1, false, "comfy"
+      ],
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 9,
+      "type": "WanVideoDecode",
+      "pos": [950, -300],
+      "size": {"0": 315, "1": 198},
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 9}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "links": [10], "shape": 3, "slot_index": 0}
+      ],
+      "title": "WAN Decode",
+      "properties": {"Node name for S&R": "WanVideoDecode"},
+      "widgets_values": [false, 272, 272, 144, 128, "default"],
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 10,
+      "type": "VHS_VideoCombine",
+      "pos": [1300, -350],
+      "size": {"0": 310, "1": 334},
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 10}
+      ],
+      "outputs": [
+        {"name": "Filenames", "type": "VHS_FILENAMES", "links": [], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Final Video Output",
+      "properties": {"Node name for S&R": "VHS_VideoCombine"},
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "%date:yyyy-MM-dd%/Film_Set_Screenplay/auto_",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true
+      },
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 11,
+      "type": "WanVideoVACEModelSelect",
+      "pos": [-800, 100],
+      "size": {"0": 410, "1": 58},
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "outputs": [
+        {"name": "vace_model", "type": "VACEPATH", "links": [11], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VACE Model",
+      "properties": {"Node name for S&R": "WanVideoVACEModelSelect"},
+      "widgets_values": ["Wan\\Wan2_1-VACE_module_14B_bf16.safetensors"]
+    },
+    {
+      "id": 12,
+      "type": "WanVideoModelLoader",
+      "pos": [-350, 100],
+      "size": {"0": 350, "1": 150},
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "vace_model", "type": "VACEPATH", "link": 11}
+      ],
+      "outputs": [
+        {"name": "model", "type": "WANVIDEOMODEL", "links": [12], "shape": 3, "slot_index": 0},
+        {"name": "vae", "type": "WANVAE", "links": [13], "shape": 3, "slot_index": 1},
+        {"name": "text_encoder", "type": "WANTEXTENCODER", "links": [14], "shape": 3, "slot_index": 2}
+      ],
+      "title": "Model Loader",
+      "properties": {"Node name for S&R": "WanVideoModelLoader"}
+    },
+    {
+      "id": 13,
+      "type": "Anything Everywhere",
+      "pos": [50, 150],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 12}
+      ],
+      "title": "> Model",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 14,
+      "type": "Anything Everywhere",
+      "pos": [50, 180],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 13}
+      ],
+      "title": "> VAE",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 15,
+      "type": "Anything Everywhere",
+      "pos": [50, 210],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 14}
+      ],
+      "title": "> Text Encoder",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 16,
+      "type": "Note",
+      "pos": [-800, 300],
+      "size": {"0": 1200, "1": 200},
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "title": "Film Set Workflow - Phase B",
+      "properties": {"text": ""},
+      "widgets_values": [
+        "This is Phase B: The Film Set\n\nThis workflow takes the pipe-separated screenplay from Phase A and renders the final video.\n\nKEY INNOVATION: WanVideoContextOptions enables seamless temporal coherence across the entire sequence.\n- context_frames: Size of processing window (81 frames)\n- context_overlap: Frames shared between windows (16 frames)\n\nThe system automatically handles blending, color matching, and temporal consistency.\nNo manual chaining or blending nodes required!\n\nSimply paste the formatted screenplay from Phase A into the 'Pipe-Separated Screenplay' node."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 5, 0, "STRING"],
+    [2, 2, 0, 4, 0, "IMAGE"],
+    [3, 3, 0, 4, 1, "IMAGE"],
+    [4, 4, 0, 6, 0, "IMAGE"],
+    [5, 4, 1, 6, 1, "MASK"],
+    [6, 5, 0, 8, 1, "WANVIDEOTEXTEMBEDS"],
+    [7, 6, 0, 8, 0, "WANVIDIMAGE_EMBEDS"],
+    [8, 7, 0, 8, 2, "WANVIDEOCONTEXTOPTIONS"],
+    [9, 8, 0, 9, 0, "LATENT"],
+    [10, 9, 0, 10, 0, "IMAGE"],
+    [11, 11, 0, 12, 0, "VACEPATH"],
+    [12, 12, 0, 13, 0, "*"],
+    [13, 12, 1, 14, 0, "*"],
+    [14, 12, 2, 15, 0, "*"]
+  ],
+  "groups": [
+    {
+      "title": "Screenplay Input",
+      "bounding": [-850, -550, 700, 350],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "Video Generation with Context",
+      "bounding": [150, -550, 800, 400],
+      "color": "#5f5f2f",
+      "font_size": 24
+    },
+    {
+      "title": "Final Output",
+      "bounding": [1250, -400, 400, 200],
+      "color": "#7f3f7f",
+      "font_size": 24
+    },
+    {
+      "title": "Model Configuration",
+      "bounding": [-850, 50, 950, 250],
+      "color": "#5f5f2f",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7,
+      "offset": [800, 600]
+    }
+  },
+  "version": 0.4
+}

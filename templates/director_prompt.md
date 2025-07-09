@@ -1,5 +1,5 @@
 ---
-output_type: single_string
+output_type: json_array
 description: "Returns a single JSON object for a detected object."
 ---
 You are a creative and logical assistant. Your task is to break down a high-level goal into the single next logical step.

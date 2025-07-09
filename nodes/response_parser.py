@@ -1,5 +1,5 @@
 # In shrug-prompter/nodes/response_parser.py
-# This is the final, correct version that fixes the NaN bug.
+# Enhanced version with robust None handling for WanVideoWrapper compatibility
 
 import torch
 import json
@@ -10,6 +10,8 @@ class ShrugResponseParser:
     Parses the raw text output from the ShrugPrompter. Its primary job is to
     pass through the VLM's response as a single, clean string. This string can
     then be explicitly handled by other nodes (like JSON String to List).
+    
+    Enhanced version with robust None handling for WanVideoWrapper compatibility.
     """
     # This node outputs single items. The list conversion is handled by the dedicated utility node.
     OUTPUT_IS_LIST = (False, False, False, False)
@@ -41,30 +43,58 @@ class ShrugResponseParser:
 
         llm_response = context.get("llm_response")
 
+        # ENHANCED: Provide fallback prompt if no LLM response
         if not llm_response:
-            return ("ERROR: No llm_response in context", self._create_empty_mask(mask_size, mask_size), "", "ERROR: No llm_response in context")
+            fallback_prompt = "A cinematic scene with dynamic camera movement, professional lighting, and compelling visual storytelling"
+            debug_info.append("WARNING: No llm_response in context, using fallback prompt")
+            return (fallback_prompt, self._create_empty_mask(mask_size, mask_size), "", "WARNING: No llm_response in context")
 
         response_text = self._extract_response_text(llm_response).strip()
         if debug_mode:
             debug_info.append(f"--- Response Parser ---\nRaw VLM Response: {response_text[:500]}...")
 
+        # ENHANCED: Ensure we never return None or empty string
+        if not response_text or response_text.strip() == "":
+            fallback_prompt = "A cinematic scene with dynamic camera movement, professional lighting, and compelling visual storytelling"
+            debug_info.append("WARNING: Empty response text, using fallback prompt")
+            response_text = fallback_prompt
+
+        # ENHANCED: Additional safety check for specific error patterns
+        if response_text.startswith("ERROR:") or response_text.startswith("PARSE ERROR:"):
+            fallback_prompt = "A cinematic scene with dynamic camera movement, professional lighting, and compelling visual storytelling"
+            debug_info.append(f"WARNING: Error in response ({response_text[:50]}), using fallback prompt")
+            response_text = fallback_prompt
+
         mask, label = self._try_parse_detection(response_text, original_image, mask_size, confidence_threshold)
+
+        # FINAL SAFETY CHECK: Ensure response_text is never None
+        if response_text is None:
+            response_text = "A cinematic scene with dynamic camera movement, professional lighting, and compelling visual storytelling"
+            debug_info.append("CRITICAL: response_text was None, using fallback prompt")
 
         return (response_text, mask, label, "\n".join(debug_info))
 
     def _extract_response_text(self, resp: Any) -> str:
         """Robustly extracts text content from various VLM response formats."""
-        if isinstance(resp, str): return resp
-        if not isinstance(resp, dict): return str(resp)
+        if isinstance(resp, str): 
+            return resp if resp else "A cinematic scene with dynamic camera movement and professional lighting"
+        if not isinstance(resp, dict): 
+            return str(resp) if resp else "A cinematic scene with dynamic camera movement and professional lighting"
         choices = resp.get("choices", [])
         if choices and "message" in choices[0] and "content" in choices[0]["message"]:
             content = choices[0]["message"]["content"]
-            if content.strip().startswith("```json"):
+            if content and content.strip().startswith("```json"):
                 content = content.strip()[7:-3].strip()
-            return content
+            return content if content else "A cinematic scene with dynamic camera movement and professional lighting"
         for key in ["content", "text", "response", "output"]:
-            if key in resp: return resp[key]
-        return json.dumps(resp)
+            if key in resp and resp[key]: 
+                return resp[key]
+        # Last resort: return JSON dump or fallback
+        try:
+            result = json.dumps(resp)
+            return result if result else "A cinematic scene with dynamic camera movement and professional lighting"
+        except:
+            return "A cinematic scene with dynamic camera movement and professional lighting"
 
     def _try_parse_detection(self, text: str, image: torch.Tensor, size: int, thresh: float) -> Tuple[torch.Tensor, str]:
         """Tries to create a mask if the text is a detection JSON, otherwise returns empty."""

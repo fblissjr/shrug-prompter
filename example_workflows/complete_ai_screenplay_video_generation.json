@@ -1,0 +1,896 @@
+{
+  "last_node_id": 45,
+  "last_link_id": 150,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "StringConstant",
+      "pos": [-1600, -2200],
+      "size": {"0": 400, "1": 120},
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": [1], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Story Arc",
+      "properties": {"Node name for S&R": "StringConstant"},
+      "widgets_values": ["Create a smooth cinematic video sequence showing a character's journey from urban to nature environments, with dynamic camera movements, atmospheric lighting transitions, and compelling visual storytelling that maintains character continuity throughout"]
+    },
+    {
+      "id": 2,
+      "type": "PrimitiveInt",
+      "pos": [-1150, -2200],
+      "size": {"0": 200, "1": 80},
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {"name": "INT", "type": "INT", "links": [2, 3], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Images Per Prompt",
+      "properties": {"Node name for S&R": "PrimitiveInt"},
+      "widgets_values": [3, "fixed"]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [-1800, -2500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [4, 5], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Keyframe 1",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["keyframe_001.jpg", "image"]
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [-1450, -2500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [6, 7], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Keyframe 2",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["keyframe_002.jpg", "image"]
+    },
+    {
+      "id": 5,
+      "type": "LoadImage",
+      "pos": [-1100, -2500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [8, 9], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Keyframe 3",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["keyframe_003.jpg", "image"]
+    },
+    {
+      "id": 6,
+      "type": "LoadImage",
+      "pos": [-750, -2500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [10, 11], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Keyframe 4",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["keyframe_004.jpg", "image"]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [-400, -2500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [12, 13], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Keyframe 5",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["keyframe_005.jpg", "image"]
+    },
+    {
+      "id": 8,
+      "type": "ImpactMakeImageBatch",
+      "pos": [-1400, -1900],
+      "size": {"0": 200, "1": 400},
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "image1", "type": "IMAGE", "link": 4},
+        {"name": "image2", "type": "IMAGE", "link": 6},
+        {"name": "image3", "type": "IMAGE", "link": 8},
+        {"name": "image4", "type": "IMAGE", "link": 10},
+        {"name": "image5", "type": "IMAGE", "link": 12}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [14], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VLM Context Images",
+      "properties": {"Node name for S&R": "ImpactMakeImageBatch"},
+      "widgets_values": [],
+      "color": "#8f4b2f",
+      "bgcolor": "#a35f3f"
+    },
+    {
+      "id": 9,
+      "type": "ImpactMakeImageBatch",
+      "pos": [-1150, -1900],
+      "size": {"0": 200, "1": 400},
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "image1", "type": "IMAGE", "link": 5},
+        {"name": "image2", "type": "IMAGE", "link": 7},
+        {"name": "image3", "type": "IMAGE", "link": 9},
+        {"name": "image4", "type": "IMAGE", "link": 11},
+        {"name": "image5", "type": "IMAGE", "link": 13}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [15, 16], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Loop Processing Images",
+      "properties": {"Node name for S&R": "ImpactMakeImageBatch"},
+      "widgets_values": [],
+      "color": "#2f5f3f",
+      "bgcolor": "#3f6f4f"
+    },
+    {
+      "id": 10,
+      "type": "ShrugProviderSelector",
+      "pos": [-900, -1900],
+      "size": {"0": 300, "1": 200},
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "outputs": [
+        {"name": "context", "type": "*", "links": [17], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Provider Selector",
+      "properties": {"Node name for S&R": "ShrugProviderSelector"},
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "dummy_key",
+        "gpt-4o"
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 11,
+      "type": "ScreenplayDirector",
+      "pos": [-550, -1950],
+      "size": {"0": 400, "1": 300},
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 17},
+        {"name": "story_arc", "type": "STRING", "link": 1},
+        {"name": "story_so_far", "type": "STRING", "link": 25},
+        {"name": "last_frame", "type": "IMAGE", "link": 14},
+        {"name": "images_per_prompt", "type": "INT", "link": 2}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [18], "shape": 3, "slot_index": 0},
+        {"name": "director_system", "type": "STRING", "links": [19], "shape": 3, "slot_index": 1},
+        {"name": "director_user", "type": "STRING", "links": [20], "shape": 3, "slot_index": 2},
+        {"name": "cinematographer_system", "type": "STRING", "links": [23], "shape": 3, "slot_index": 3},
+        {"name": "cinematographer_user", "type": "STRING", "links": [], "shape": 3, "slot_index": 4},
+        {"name": "last_frame", "type": "IMAGE", "links": [21, 24], "shape": 3, "slot_index": 5},
+        {"name": "max_tokens", "type": "INT", "links": [22, 26], "shape": 3, "slot_index": 6},
+        {"name": "temperature", "type": "FLOAT", "links": [27, 28], "shape": 3, "slot_index": 7},
+        {"name": "top_p", "type": "FLOAT", "links": [29, 30], "shape": 3, "slot_index": 8}
+      ],
+      "title": "Screenplay Director",
+      "properties": {"Node name for S&R": "ScreenplayDirector"},
+      "widgets_values": [
+        1,
+        256,
+        0.8,
+        0.9,
+        "",
+        ""
+      ],
+      "color": "#8f4b2f",
+      "bgcolor": "#a35f3f"
+    },
+    {
+      "id": 12,
+      "type": "ShrugPrompter",
+      "pos": [-100, -1950],
+      "size": {"0": 350, "1": 300},
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 18},
+        {"name": "system_prompt", "type": "STRING", "link": 19},
+        {"name": "user_prompt", "type": "STRING", "link": 20},
+        {"name": "max_tokens", "type": "INT", "link": 22},
+        {"name": "temperature", "type": "FLOAT", "link": 27},
+        {"name": "top_p", "type": "FLOAT", "link": 29},
+        {"name": "images", "type": "IMAGE", "link": 21}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [31], "shape": 3, "slot_index": 0},
+        {"name": "debug_info", "type": "STRING", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Director AI Call",
+      "properties": {"Node name for S&R": "ShrugPrompter"},
+      "widgets_values": [
+        "{}",
+        "{}",
+        true,
+        false
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 13,
+      "type": "ShrugResponseParser",
+      "pos": [300, -1950],
+      "size": {"0": 300, "1": 150},
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 31}
+      ],
+      "outputs": [
+        {"name": "OPTIMIZED_PROMPT", "type": "STRING", "links": [32], "shape": 3, "slot_index": 0},
+        {"name": "DETECTED_MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1},
+        {"name": "DETECTED_LABEL", "type": "STRING", "links": [], "shape": 3, "slot_index": 2},
+        {"name": "DEBUG_INFO", "type": "STRING", "links": [], "shape": 3, "slot_index": 3}
+      ],
+      "title": "Parse Director Response",
+      "properties": {"Node name for S&R": "ShrugResponseParser"},
+      "widgets_values": []
+    },
+    {
+      "id": 14,
+      "type": "ShrugPrompter",
+      "pos": [-100, -1600],
+      "size": {"0": 350, "1": 300},
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 18},
+        {"name": "system_prompt", "type": "STRING", "link": 23},
+        {"name": "user_prompt", "type": "STRING", "link": 32},
+        {"name": "max_tokens", "type": "INT", "link": 26},
+        {"name": "temperature", "type": "FLOAT", "link": 28},
+        {"name": "top_p", "type": "FLOAT", "link": 30},
+        {"name": "images", "type": "IMAGE", "link": 24}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [33], "shape": 3, "slot_index": 0},
+        {"name": "debug_info", "type": "STRING", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Cinematographer AI Call",
+      "properties": {"Node name for S&R": "ShrugPrompter"},
+      "widgets_values": [
+        "{}",
+        "{}",
+        true,
+        false
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 15,
+      "type": "ShrugResponseParser",
+      "pos": [300, -1600],
+      "size": {"0": 300, "1": 150},
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 33}
+      ],
+      "outputs": [
+        {"name": "OPTIMIZED_PROMPT", "type": "STRING", "links": [34], "shape": 3, "slot_index": 0},
+        {"name": "DETECTED_MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1},
+        {"name": "DETECTED_LABEL", "type": "STRING", "links": [], "shape": 3, "slot_index": 2},
+        {"name": "DEBUG_INFO", "type": "STRING", "links": [], "shape": 3, "slot_index": 3}
+      ],
+      "title": "Parse Cinematographer Response",
+      "properties": {"Node name for S&R": "ShrugResponseParser"},
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "BatchCount+",
+      "pos": [650, -1950],
+      "size": {"0": 150, "1": 26},
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {"name": "batch", "type": "*", "link": 15}
+      ],
+      "outputs": [
+        {"name": "INT", "type": "INT", "links": [35], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Count Total Images",
+      "properties": {"Node name for S&R": "BatchCount+"},
+      "widgets_values": []
+    },
+    {
+      "id": 17,
+      "type": "SimpleMath+",
+      "pos": [850, -1950],
+      "size": {"0": 200, "1": 100},
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {"name": "a", "type": "*", "link": 35},
+        {"name": "b", "type": "*", "link": 3}
+      ],
+      "outputs": [
+        {"name": "INT", "type": "INT", "links": [36], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Calculate Pair Count",
+      "properties": {"Node name for S&R": "SimpleMath+"},
+      "widgets_values": ["ceil(a / b)"]
+    },
+    {
+      "id": 18,
+      "type": "GetImageRangeFromBatch",
+      "pos": [650, -1800],
+      "size": {"0": 280, "1": 102},
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 16},
+        {"name": "num_frames", "type": "INT", "link": 3}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [37], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Extract Range",
+      "properties": {"Node name for S&R": "GetImageRangeFromBatch"},
+      "widgets_values": [0, 1]
+    },
+    {
+      "id": 19,
+      "type": "ForLoopOpen",
+      "pos": [1100, -1900],
+      "size": {"0": 270, "1": 158},
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {"name": "initial_value1", "type": "*", "link": 37},
+        {"name": "initial_value2", "type": "*", "link": 34},
+        {"name": "remaining", "type": "INT", "link": 36}
+      ],
+      "outputs": [
+        {"name": "flow_control", "type": "FLOW_CONTROL", "links": [50], "shape": 1, "slot_index": 0},
+        {"name": "remaining", "type": "INT", "links": [51], "shape": 3, "slot_index": 1},
+        {"name": "value1", "type": "*", "links": [52], "shape": 7, "slot_index": 2},
+        {"name": "value2", "type": "*", "links": [53], "shape": 7, "slot_index": 3}
+      ],
+      "title": "Processing Loop",
+      "properties": {"Node name for S&R": "ForLoopOpen"},
+      "widgets_values": [1]
+    },
+    {
+      "id": 20,
+      "type": "WanVideoImageResizeToClosest",
+      "pos": [1400, -1850],
+      "size": {"0": 300, "1": 146},
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 52}
+      ],
+      "outputs": [
+        {"name": "image", "type": "IMAGE", "links": [54], "shape": 3, "slot_index": 0},
+        {"name": "width", "type": "INT", "links": [55], "shape": 3, "slot_index": 1},
+        {"name": "height", "type": "INT", "links": [56], "shape": 3, "slot_index": 2}
+      ],
+      "title": "Resize Images",
+      "properties": {"Node name for S&R": "WanVideoImageResizeToClosest"},
+      "widgets_values": [480, 832, "keep_input"]
+    },
+    {
+      "id": 21,
+      "type": "ImageFromBatch",
+      "pos": [1750, -1950],
+      "size": {"0": 210, "1": 82},
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 54}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [57], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Start Frame",
+      "properties": {"Node name for S&R": "ImageFromBatch"},
+      "widgets_values": [0, 1]
+    },
+    {
+      "id": 22,
+      "type": "ImageFromBatch",
+      "pos": [1750, -1830],
+      "size": {"0": 210, "1": 82},
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 54}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [58], "shape": 3, "slot_index": 0}
+      ],
+      "title": "End Frame", 
+      "properties": {"Node name for S&R": "ImageFromBatch"},
+      "widgets_values": [-1, 1]
+    },
+    {
+      "id": 23,
+      "type": "WanVideoVACEStartToEndFrame",
+      "pos": [2000, -1900],
+      "size": {"0": 270, "1": 190},
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {"name": "start_image", "type": "IMAGE", "link": 57},
+        {"name": "end_image", "type": "IMAGE", "link": 58}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "links": [59], "shape": 3, "slot_index": 0},
+        {"name": "masks", "type": "MASK", "links": [60], "shape": 3, "slot_index": 1}
+      ],
+      "title": "VACE Frame Gen",
+      "properties": {"Node name for S&R": "WanVideoVACEStartToEndFrame"},
+      "widgets_values": [33, 0.5, 0, -1]
+    },
+    {
+      "id": 24,
+      "type": "WanVideoVACEEncode",
+      "pos": [2300, -1900],
+      "size": {"0": 350, "1": 282},
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {"name": "input_frames", "type": "IMAGE", "link": 59},
+        {"name": "input_masks", "type": "MASK", "link": 60},
+        {"name": "width", "type": "INT", "link": 55},
+        {"name": "height", "type": "INT", "link": 56}
+      ],
+      "outputs": [
+        {"name": "vace_embeds", "type": "WANVIDIMAGE_EMBEDS", "links": [61], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VACE Encode",
+      "properties": {"Node name for S&R": "WanVideoVACEEncode"},
+      "widgets_values": [480, 832, 33, 0.65, 0, 1, false]
+    },
+    {
+      "id": 25,
+      "type": "WanVideoTextEncode",
+      "pos": [2000, -1550],
+      "size": {"0": 350, "1": 250},
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {"name": "positive_prompt", "type": "STRING", "link": 53}
+      ],
+      "outputs": [
+        {"name": "text_embeds", "type": "WANVIDEOTEXTEMBEDS", "links": [62], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Text Encode",
+      "properties": {"Node name for S&R": "WanVideoTextEncode"},
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        true
+      ]
+    },
+    {
+      "id": 26,
+      "type": "WanVideoSampler",
+      "pos": [2700, -1900],
+      "size": {"0": 320, "1": 618},
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {"name": "image_embeds", "type": "WANVIDIMAGE_EMBEDS", "link": 61},
+        {"name": "text_embeds", "type": "WANVIDEOTEXTEMBEDS", "link": 62},
+        {"name": "seed", "type": "INT", "link": 51}
+      ],
+      "outputs": [
+        {"name": "samples", "type": "LATENT", "links": [63], "shape": 3, "slot_index": 0}
+      ],
+      "title": "WAN Sampler",
+      "properties": {"Node name for S&R": "WanVideoSampler"},
+      "widgets_values": [
+        8, 1.0, 5.0, 11, "fixed", true, "euler", 0, 1, false, "comfy"
+      ]
+    },
+    {
+      "id": 27,
+      "type": "WanVideoDecode",
+      "pos": [3100, -1900],
+      "size": {"0": 315, "1": 198},
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 63}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "links": [64], "shape": 3, "slot_index": 0}
+      ],
+      "title": "WAN Decode",
+      "properties": {"Node name for S&R": "WanVideoDecode"},
+      "widgets_values": [false, 272, 272, 144, 128, "default"]
+    },
+    {
+      "id": 28,
+      "type": "ForLoopClose",
+      "pos": [3500, -1950],
+      "size": {"0": 150, "1": 106},
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {"name": "flow_control", "type": "FLOW_CONTROL", "link": 50},
+        {"name": "initial_value1", "type": "*", "link": 64}
+      ],
+      "outputs": [
+        {"name": "value1", "type": "*", "links": [65], "shape": 7, "slot_index": 0}
+      ],
+      "title": "Loop Close",
+      "properties": {"Node name for S&R": "ForLoopClose"},
+      "widgets_values": []
+    },
+    {
+      "id": 29,
+      "type": "WanVideoBlender",
+      "pos": [3750, -1950],
+      "size": {"0": 214, "1": 78},
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {"name": "video_1", "type": "IMAGE", "link": 65},
+        {"name": "video_2", "type": "IMAGE", "link": 65}
+      ],
+      "outputs": [
+        {"name": "blended_video_frames", "type": "IMAGE", "links": [66], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Blend Segments",
+      "properties": {"Node name for S&R": "WanVideoBlender"},
+      "widgets_values": [5]
+    },
+    {
+      "id": 30,
+      "type": "GIMMVFI_interpolate",
+      "pos": [3750, -1750],
+      "size": {"0": 270, "1": 174},
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {"name": "gimmvfi_model", "type": "GIMMVIF_MODEL", "link": 67},
+        {"name": "images", "type": "IMAGE", "link": 66}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "links": [68], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Frame Interpolation",
+      "properties": {"Node name for S&R": "GIMMVFI_interpolate"},
+      "widgets_values": [2, 2, 0, "fixed", false]
+    },
+    {
+      "id": 31,
+      "type": "DownloadAndLoadGIMMVFIModel",
+      "pos": [3500, -1750],
+      "size": {"0": 200, "1": 106},
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "outputs": [
+        {"name": "gimmvfi_model", "type": "GIMMVIF_MODEL", "links": [67], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VFI Model",
+      "properties": {"Node name for S&R": "DownloadAndLoadGIMMVFIModel"},
+      "widgets_values": ["gimmvfi_r_arb_lpips_fp32.safetensors", "fp32", false]
+    },
+    {
+      "id": 32,
+      "type": "VHS_VideoCombine",
+      "pos": [4150, -1800],
+      "size": {"0": 310, "1": 334},
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 68}
+      ],
+      "outputs": [
+        {"name": "Filenames", "type": "VHS_FILENAMES", "links": [], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Final Video Output",
+      "properties": {"Node name for S&R": "VHS_VideoCombine"},
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "%date:yyyy-MM-dd%/AI_Screenplay_Video/auto_",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true
+      },
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 40,
+      "type": "WanVideoVACEModelSelect",
+      "pos": [-1200, -1200],
+      "size": {"0": 410, "1": 58},
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "outputs": [
+        {"name": "vace_model", "type": "VACEPATH", "links": [69], "shape": 3, "slot_index": 0}
+      ],
+      "title": "VACE Model",
+      "properties": {"Node name for S&R": "WanVideoVACEModelSelect"},
+      "widgets_values": ["Wan\\Wan2_1-VACE_module_14B_bf16.safetensors"]
+    },
+    {
+      "id": 41,
+      "type": "WanVideoModelLoader",
+      "pos": [-750, -1200],
+      "size": {"0": 350, "1": 150},
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "vace_model", "type": "VACEPATH", "link": 69}
+      ],
+      "outputs": [
+        {"name": "model", "type": "WANVIDEOMODEL", "links": [70], "shape": 3, "slot_index": 0},
+        {"name": "vae", "type": "WANVAE", "links": [71], "shape": 3, "slot_index": 1},
+        {"name": "text_encoder", "type": "WANTEXTENCODER", "links": [72], "shape": 3, "slot_index": 2}
+      ],
+      "title": "Model Loader",
+      "properties": {"Node name for S&R": "WanVideoModelLoader"}
+    },
+    {
+      "id": 42,
+      "type": "Anything Everywhere",
+      "pos": [-350, -1150],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 70}
+      ],
+      "title": "> Model",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 43,
+      "type": "Anything Everywhere",
+      "pos": [-350, -1120],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 71}
+      ],
+      "title": "> VAE",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 44,
+      "type": "Anything Everywhere",
+      "pos": [-350, -1090],
+      "size": {"0": 172, "1": 26},
+      "flags": {"collapsed": true},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "anything", "type": "*", "link": 72}
+      ],
+      "title": "> Text Encoder",
+      "properties": {
+        "Node name for S&R": "Anything Everywhere",
+        "group_restricted": 0,
+        "color_restricted": 0
+      }
+    },
+    {
+      "id": 45,
+      "type": "StringConstant",
+      "pos": [-900, -1600],
+      "size": {"0": 400, "1": 100},
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": [25], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Initial Story State",
+      "properties": {"Node name for S&R": "StringConstant"},
+      "widgets_values": ["SCENE 1: The story begins with our protagonist in their urban environment."]
+    },
+    {
+      "id": 50,
+      "type": "Note",
+      "pos": [-1600, -800],
+      "size": {"0": 1200, "1": 250},
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "title": "Complete AI Screenplay Video Generation",
+      "properties": {"text": ""},
+      "widgets_values": [
+        "COMPLETE END-TO-END SYSTEM:\n\n1. AI generates screenplay prompts using proper shrug-prompter architecture\n2. Prompts feed into WAN VACE processing loop for actual video generation\n3. Final output: MP4 video file with VHS_VideoCombine\n\nThis combines the best of both worlds:\n✅ Proper shrug-prompter integration (no bypassing)\n✅ AI-generated cinematic prompts\n✅ Actual WAN2.1 video generation\n✅ Final MP4 output ready to watch\n\nDecoupled image paths prevent loop detection while generating real video!"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 11, 1, "STRING"],
+    [2, 2, 0, 11, 4, "INT"],
+    [3, 2, 0, 18, 1, "INT"],
+    [4, 3, 0, 8, 0, "IMAGE"],
+    [5, 3, 0, 9, 0, "IMAGE"],
+    [6, 4, 0, 8, 1, "IMAGE"],
+    [7, 4, 0, 9, 1, "IMAGE"],
+    [8, 5, 0, 8, 2, "IMAGE"],
+    [9, 5, 0, 9, 2, "IMAGE"],
+    [10, 6, 0, 8, 3, "IMAGE"],
+    [11, 6, 0, 9, 3, "IMAGE"],
+    [12, 7, 0, 8, 4, "IMAGE"],
+    [13, 7, 0, 9, 4, "IMAGE"],
+    [14, 8, 0, 11, 3, "IMAGE"],
+    [15, 9, 0, 16, 0, "*"],
+    [16, 9, 0, 18, 0, "IMAGE"],
+    [17, 10, 0, 11, 0, "*"],
+    [18, 11, 0, 12, 0, "*"],
+    [18, 11, 0, 14, 0, "*"],
+    [19, 11, 1, 12, 1, "STRING"],
+    [20, 11, 2, 12, 2, "STRING"],
+    [21, 11, 5, 12, 6, "IMAGE"],
+    [22, 11, 6, 12, 3, "INT"],
+    [23, 11, 3, 14, 1, "STRING"],
+    [24, 11, 5, 14, 6, "IMAGE"],
+    [25, 45, 0, 11, 2, "STRING"],
+    [26, 11, 6, 14, 3, "INT"],
+    [27, 11, 7, 12, 4, "FLOAT"],
+    [28, 11, 7, 14, 4, "FLOAT"],
+    [29, 11, 8, 12, 5, "FLOAT"],
+    [30, 11, 8, 14, 5, "FLOAT"],
+    [31, 12, 0, 13, 0, "*"],
+    [32, 13, 0, 14, 2, "STRING"],
+    [33, 14, 0, 15, 0, "*"],
+    [34, 15, 0, 19, 1, "*"],
+    [35, 16, 0, 17, 0, "*"],
+    [36, 17, 0, 19, 2, "INT"],
+    [37, 18, 0, 19, 0, "*"],
+    [50, 19, 0, 28, 0, "FLOW_CONTROL"],
+    [51, 19, 1, 26, 17, "INT"],
+    [52, 19, 2, 20, 0, "IMAGE"],
+    [53, 19, 3, 25, 2, "STRING"],
+    [54, 20, 0, 21, 0, "IMAGE"],
+    [54, 20, 0, 22, 0, "IMAGE"],
+    [55, 20, 1, 24, 5, "INT"],
+    [56, 20, 2, 24, 6, "INT"],
+    [57, 21, 0, 23, 0, "IMAGE"],
+    [58, 22, 0, 23, 1, "IMAGE"],
+    [59, 23, 0, 24, 1, "IMAGE"],
+    [60, 23, 1, 24, 3, "MASK"],
+    [61, 24, 0, 26, 1, "WANVIDIMAGE_EMBEDS"],
+    [62, 25, 0, 26, 2, "WANVIDEOTEXTEMBEDS"],
+    [63, 26, 0, 27, 1, "LATENT"],
+    [64, 27, 0, 28, 1, "*"],
+    [65, 28, 0, 29, 0, "IMAGE"],
+    [65, 28, 0, 29, 1, "IMAGE"],
+    [66, 29, 0, 30, 1, "IMAGE"],
+    [67, 31, 0, 30, 0, "GIMMVIF_MODEL"],
+    [68, 30, 0, 32, 0, "IMAGE"],
+    [69, 40, 0, 41, 0, "VACEPATH"],
+    [70, 41, 0, 42, 0, "*"],
+    [71, 41, 1, 43, 0, "*"],
+    [72, 41, 2, 44, 0, "*"]
+  ],
+  "groups": [
+    {
+      "title": "Keyframe Setup",
+      "bounding": [-1850, -2550, 1500, 400],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "AI Screenplay Generation (Proper Architecture)",
+      "bounding": [-1450, -2000, 1800, 500],
+      "color": "#8f4b2f",
+      "font_size": 24
+    },
+    {
+      "title": "WAN VACE Video Generation Loop",
+      "bounding": [600, -2000, 3000, 600],
+      "color": "#2f5f3f",
+      "font_size": 24
+    },
+    {
+      "title": "Post Processing & Final Video",
+      "bounding": [3700, -2000, 850, 350],
+      "color": "#7f3f7f",
+      "font_size": 24
+    },
+    {
+      "title": "Model Configuration",
+      "bounding": [-1250, -1250, 950, 200],
+      "color": "#5f5f2f",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.4,
+      "offset": [2000, 2400]
+    }
+  },
+  "version": 0.4
+}

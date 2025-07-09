@@ -15,11 +15,11 @@ class ShrugPrompter:
         return {
             "required": {
                 "context": ("*",),
-                "system_prompt": ("STRING", {"multiline": True, "default": "You are a helpful assistant."}),
+                "system_prompt": ("STRING", {"multiline": True}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
-                "max_tokens": ("INT", {"default": 1024, "min": 1, "max": 8192}),
-                "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
-                "top_p": ("FLOAT", {"default": 0.95, "min": 0.0, "max": 1.0}),
+                "max_tokens": ("INT", {"default": 512, "min": 1, "max": 32000}),
+                "temperature": ("FLOAT", {"default": 1.00, "min": 0.00, "max": 2.00}),
+                "top_p": ("FLOAT", {"default": 0.95, "min": 0.00, "max": 1.00}),
             },
             "optional": {
                 "images": ("IMAGE",),

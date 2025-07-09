@@ -1,27 +1,41 @@
-# In shrug-prompter/__init__.py
+# shrug-prompter/__init__.py
 
-from .nodes.provider_selector import ShrugProviderSelector
-from .nodes.prompter import ShrugPrompter
-from .nodes.response_parser import ShrugResponseParser, JSONStringToList
-from .nodes.prompt_template_loader import PromptTemplateLoader
-from .nodes.mask_utils import ShrugMaskUtilities # <--- CORRECTED IMPORT
+from .nodes import ShrugPrompter
+from .nodes import ShrugProviderSelector
+from .nodes import ShrugResponseParser, JSONStringToList
+from .nodes import PromptTemplateLoader
+from .nodes import ShrugMaskUtilities
+from .nodes import AutomatedDirector, AutomatedDirectorImageBatcher
+from .nodes import ScreenplayDirector, ScreenplayAccumulator, ScreenplayFormatter
 
+# Node class mappings for ComfyUI registration
 NODE_CLASS_MAPPINGS = {
-    "ShrugProviderSelector": ShrugProviderSelector,
     "ShrugPrompter": ShrugPrompter,
+    "AutomatedDirector": AutomatedDirector,
+    "AutomatedDirectorImageBatcher": AutomatedDirectorImageBatcher,
+    "ScreenplayDirector": ScreenplayDirector,
+    "ScreenplayAccumulator": ScreenplayAccumulator,
+    "ScreenplayFormatter": ScreenplayFormatter,
+    "ShrugProviderSelector": ShrugProviderSelector,
     "ShrugResponseParser": ShrugResponseParser,
-    "PromptTemplateLoader_Shrug": PromptTemplateLoader,
     "JSONStringToList": JSONStringToList,
-    "ShrugMaskUtilities": ShrugMaskUtilities, # <--- Correctly registered
+    "PromptTemplateLoader_Shrug": PromptTemplateLoader,
+    "ShrugMaskUtilities": ShrugMaskUtilities
 }
 
+# Display names for the ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ShrugProviderSelector": "Provider Selector (Shrug)",
     "ShrugPrompter": "VLM Prompter (Shrug)",
+    "AutomatedDirector": "Automated Director (WAN VACE)",
+    "AutomatedDirectorImageBatcher": "Director Image Batcher (WAN VACE)",
+    "ScreenplayDirector": "Screenplay Director (AI Writers' Room)",
+    "ScreenplayAccumulator": "Screenplay Accumulator (Writers' Room)",
+    "ScreenplayFormatter": "Screenplay Formatter (Film Set)",
+    "ShrugProviderSelector": "Provider Selector (Shrug)",
     "ShrugResponseParser": "Response Parser (Shrug)",
-    "PromptTemplateLoader_Shrug": "Prompt Template Loader (Shrug)",
     "JSONStringToList": "JSON String to List",
-    "ShrugMaskUtilities": "Mask Utilities (Shrug)",
+    "PromptTemplateLoader_Shrug": "Prompt Template Loader (Shrug)",
+    "ShrugMaskUtilities": "Mask Utilities (Shrug)"
 }
 
 WEB_DIRECTORY = "./js"

@@ -1,0 +1,315 @@
+{
+  "last_node_id": 20,
+  "last_link_id": 40,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "StringConstant",
+      "pos": [-1200, -800],
+      "size": {"0": 400, "1": 120},
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": [1], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Story Arc",
+      "properties": {"Node name for S&R": "StringConstant"},
+      "widgets_values": ["A character's journey from urban isolation to natural connection, discovering fulfillment through embracing both technology and nature."]
+    },
+    {
+      "id": 2,
+      "type": "StringConstant",
+      "pos": [-1200, -650],
+      "size": {"0": 400, "1": 120},
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": [2], "shape": 3, "slot_index": 0}
+      ],
+      "title": "Initial Story State",
+      "properties": {"Node name for S&R": "StringConstant"},
+      "widgets_values": ["SCENE 1: The story begins with our protagonist in their urban environment."]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [-1200, -500],
+      "size": {"0": 315, "1": 314},
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [3], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Starting Frame",
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["starting_frame.jpg", "image"]
+    },
+    {
+      "id": 4,
+      "type": "ShrugProviderSelector",
+      "pos": [-800, -800],
+      "size": {"0": 300, "1": 200},
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {"name": "context", "type": "*", "links": [4], "shape": 3, "slot_index": 0}
+      ],
+      "title": "API Configuration",
+      "properties": {"Node name for S&R": "ShrugProviderSelector"},
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "dummy_key",
+        "gpt-4o"
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 5,
+      "type": "ScreenplayDirector",
+      "pos": [-450, -750],
+      "size": {"0": 400, "1": 350},
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 4},
+        {"name": "story_arc", "type": "STRING", "link": 1},
+        {"name": "story_so_far", "type": "STRING", "link": 2},
+        {"name": "last_frame", "type": "IMAGE", "link": 3},
+        {"name": "scene_number", "type": "INT", "link": null}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [5, 10], "shape": 3, "slot_index": 0},
+        {"name": "director_system", "type": "STRING", "links": [6], "shape": 3, "slot_index": 1},
+        {"name": "director_user", "type": "STRING", "links": [7], "shape": 3, "slot_index": 2},
+        {"name": "cinematographer_system", "type": "STRING", "links": [11], "shape": 3, "slot_index": 3},
+        {"name": "cinematographer_user", "type": "STRING", "links": [], "shape": 3, "slot_index": 4},
+        {"name": "last_frame", "type": "IMAGE", "links": [8, 12], "shape": 3, "slot_index": 5},
+        {"name": "max_tokens", "type": "INT", "links": [9, 13], "shape": 3, "slot_index": 6},
+        {"name": "temperature", "type": "FLOAT", "links": [14, 15], "shape": 3, "slot_index": 7},
+        {"name": "top_p", "type": "FLOAT", "links": [16, 17], "shape": 3, "slot_index": 8}
+      ],
+      "title": "Screenplay Director",
+      "properties": {"Node name for S&R": "ScreenplayDirector"},
+      "widgets_values": [
+        1,
+        256,
+        0.8,
+        0.9,
+        "",
+        ""
+      ],
+      "color": "#8f4b2f",
+      "bgcolor": "#a35f3f"
+    },
+    {
+      "id": 6,
+      "type": "ShrugPrompter",
+      "pos": [0, -750],
+      "size": {"0": 350, "1": 300},
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 5},
+        {"name": "system_prompt", "type": "STRING", "link": 6},
+        {"name": "user_prompt", "type": "STRING", "link": 7},
+        {"name": "max_tokens", "type": "INT", "link": 9},
+        {"name": "temperature", "type": "FLOAT", "link": 14},
+        {"name": "top_p", "type": "FLOAT", "link": 16},
+        {"name": "images", "type": "IMAGE", "link": 8}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [18], "shape": 3, "slot_index": 0},
+        {"name": "debug_info", "type": "STRING", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Director AI Call",
+      "properties": {"Node name for S&R": "ShrugPrompter"},
+      "widgets_values": [
+        "{}",
+        "{}",
+        true,
+        false
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 7,
+      "type": "ShrugResponseParser",
+      "pos": [400, -750],
+      "size": {"0": 300, "1": 150},
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 18}
+      ],
+      "outputs": [
+        {"name": "OPTIMIZED_PROMPT", "type": "STRING", "links": [19], "shape": 3, "slot_index": 0},
+        {"name": "DETECTED_MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1},
+        {"name": "DETECTED_LABEL", "type": "STRING", "links": [], "shape": 3, "slot_index": 2},
+        {"name": "DEBUG_INFO", "type": "STRING", "links": [], "shape": 3, "slot_index": 3}
+      ],
+      "title": "Parse Director Response",
+      "properties": {"Node name for S&R": "ShrugResponseParser"},
+      "widgets_values": []
+    },
+    {
+      "id": 8,
+      "type": "ShrugPrompter",
+      "pos": [0, -400],
+      "size": {"0": 350, "1": 300},
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 10},
+        {"name": "system_prompt", "type": "STRING", "link": 11},
+        {"name": "user_prompt", "type": "STRING", "link": 19},
+        {"name": "max_tokens", "type": "INT", "link": 13},
+        {"name": "temperature", "type": "FLOAT", "link": 15},
+        {"name": "top_p", "type": "FLOAT", "link": 17},
+        {"name": "images", "type": "IMAGE", "link": 12}
+      ],
+      "outputs": [
+        {"name": "context", "type": "*", "links": [20], "shape": 3, "slot_index": 0},
+        {"name": "debug_info", "type": "STRING", "links": [], "shape": 3, "slot_index": 1}
+      ],
+      "title": "Cinematographer AI Call",
+      "properties": {"Node name for S&R": "ShrugPrompter"},
+      "widgets_values": [
+        "{}",
+        "{}",
+        true,
+        false
+      ],
+      "color": "#4b8f2f",
+      "bgcolor": "#5f9f3f"
+    },
+    {
+      "id": 9,
+      "type": "ShrugResponseParser",
+      "pos": [400, -400],
+      "size": {"0": 300, "1": 150},
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "context", "type": "*", "link": 20}
+      ],
+      "outputs": [
+        {"name": "OPTIMIZED_PROMPT", "type": "STRING", "links": [21], "shape": 3, "slot_index": 0},
+        {"name": "DETECTED_MASK", "type": "MASK", "links": [], "shape": 3, "slot_index": 1},
+        {"name": "DETECTED_LABEL", "type": "STRING", "links": [], "shape": 3, "slot_index": 2},
+        {"name": "DEBUG_INFO", "type": "STRING", "links": [], "shape": 3, "slot_index": 3}
+      ],
+      "title": "Parse Cinematographer Response",
+      "properties": {"Node name for S&R": "ShrugResponseParser"},
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "ShowText",
+      "pos": [750, -650],
+      "size": {"0": 400, "1": 200},
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 19}
+      ],
+      "title": "Director's Action Cue",
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": [""],
+      "color": "#8f4b2f",
+      "bgcolor": "#a35f3f"
+    },
+    {
+      "id": 11,
+      "type": "ShowText",
+      "pos": [750, -400],
+      "size": {"0": 400, "1": 200},
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 21}
+      ],
+      "title": "Cinematographer's Scene Prompt",
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": [""],
+      "color": "#5f5f2f",
+      "bgcolor": "#6f6f3f"
+    },
+    {
+      "id": 12,
+      "type": "Note",
+      "pos": [-1200, -150],
+      "size": {"0": 1000, "1": 200},
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "title": "Simplified Screenplay Demo - Single Scene",
+      "properties": {"text": ""},
+      "widgets_values": [
+        "This is a simplified demonstration of the two-phase system for a single scene.\n\n1. Director AI analyzes the story context and generates the next logical action\n2. Cinematographer AI converts the action into a detailed VACE-optimized prompt\n\nFor full multi-scene screenplay generation, use the writers_room_screenplay_generation.json workflow.\nThis demo helps you test the core AI director/cinematographer flow without complex looping."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 5, 1, "STRING"],
+    [2, 2, 0, 5, 2, "STRING"],
+    [3, 3, 0, 5, 3, "IMAGE"],
+    [4, 4, 0, 5, 0, "*"],
+    [5, 5, 0, 6, 0, "*"],
+    [6, 5, 1, 6, 1, "STRING"],
+    [7, 5, 2, 6, 2, "STRING"],
+    [8, 5, 5, 6, 6, "IMAGE"],
+    [9, 5, 6, 6, 3, "INT"],
+    [10, 5, 0, 8, 0, "*"],
+    [11, 5, 3, 8, 1, "STRING"],
+    [12, 5, 5, 8, 6, "IMAGE"],
+    [13, 5, 6, 8, 3, "INT"],
+    [14, 5, 7, 6, 4, "FLOAT"],
+    [15, 5, 7, 8, 4, "FLOAT"],
+    [16, 5, 8, 6, 5, "FLOAT"],
+    [17, 5, 8, 8, 5, "FLOAT"],
+    [18, 6, 0, 7, 0, "*"],
+    [19, 7, 0, 8, 2, "STRING"],
+    [19, 7, 0, 10, 0, "STRING"],
+    [20, 8, 0, 9, 0, "*"],
+    [21, 9, 0, 11, 0, "STRING"]
+  ],
+  "groups": [
+    {
+      "title": "Configuration",
+      "bounding": [-1250, -850, 600, 400],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "AI Director + Cinematographer Flow",
+      "bounding": [-500, -800, 1700, 550],
+      "color": "#8f4b2f",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7,
+      "offset": [800, 600]
+    }
+  },
+  "version": 0.4
+}
