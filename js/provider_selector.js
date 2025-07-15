@@ -1,16 +1,15 @@
 import { app } from "/scripts/app.js";
 
-// Data-driven configuration - easily extensible for new providers
+// Provider configurations
 const PROVIDER_CONFIG = {
   openai: {
     name: "OpenAI/MLX/LlamaCpp",
     defaultBaseUrl: "http://localhost:8080",
-    requiresApiKey: false, // For local unified servers
+    requiresApiKey: false,
     supportsBatch: true,
     supportsVision: true,
     timeout: 15000,
   },
-  // Ready for future expansion
   ollama: {
     name: "Ollama",
     defaultBaseUrl: "http://localhost:11434",
@@ -23,51 +22,86 @@ const PROVIDER_CONFIG = {
 
 app.registerExtension({
   name: "Shrug.ProviderSelector",
+  
+  // Add settings for shrug-prompter
+  settings: [
+    {
+      id: "shrug.show_processing_toast",
+      name: "Show VLM Processing Notifications",
+      type: "boolean",
+      defaultValue: true,
+    },
+    {
+      id: "shrug.auto_refresh_models",
+      name: "Auto-refresh Models on Provider Change",
+      type: "boolean",
+      defaultValue: true,
+    },
+    {
+      id: "shrug.model_cache_duration",
+      name: "Model Cache Duration (minutes)",
+      type: "number",
+      defaultValue: 5,
+      min: 1,
+      max: 60,
+    }
+  ],
 
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData.name === "ShrugProviderSelector") {
+    if (nodeData.name === "VLMProviderConfig") {
       const onNodeCreated = nodeType.prototype.onNodeCreated;
 
       nodeType.prototype.onNodeCreated = function () {
         onNodeCreated?.apply(this, arguments);
 
-        // Efficient state management
+        // Enhanced state management
         const state = {
           isLoading: false,
           lastRequestId: 0,
-          modelCache: new Map(), // Cache per provider:baseUrl key
-          cacheTimeout: 5 * 60 * 1000, // 5 minutes cache
+          modelCache: new Map(),
+          cacheTimeout: app.extensionManager.setting.get("shrug.model_cache_duration") * 60 * 1000,
           debounceTimer: null,
-          retryDelays: [1000, 2000, 4000], // Progressive retry delays
+          retryDelays: [1000, 2000, 4000],
+          lastSelectedModel: null,
         };
 
         // Core helper functions
         const findWidget = (name) => this.widgets.find((w) => w.name === name);
         const createCacheKey = (provider, baseUrl) => `${provider}:${baseUrl}`;
-        const isCacheValid = (entry) =>
-          entry && Date.now() - entry.timestamp < state.cacheTimeout;
+        const isCacheValid = (entry) => entry && Date.now() - entry.timestamp < state.cacheTimeout;
 
         /**
-         * Initialize widgets with enhanced functionality
+         * Initialize and enhance the model widget
          */
         const initializeWidgets = () => {
-          // Initialize model dropdown widget
           const modelWidget = findWidget("llm_model");
           if (modelWidget && modelWidget.type === "STRING") {
             const originalValue = modelWidget.value;
             const modelWidgetIndex = this.widgets.indexOf(modelWidget);
 
-            // Replace STRING with enhanced COMBO widget
+            // Replace STRING with COMBO widget
             this.widgets.splice(modelWidgetIndex, 1);
             const comboWidget = this.addWidget(
               "COMBO",
               "llm_model",
               originalValue || "Select provider to load models",
-              () => {},
-              { values: [originalValue || "Select provider to load models"] },
+              (value) => {
+                // CRITICAL: Update the actual node value when selection changes
+                this.properties = this.properties || {};
+                this.properties.llm_model = value;
+                state.lastSelectedModel = value;
+                
+                // Trigger graph serialization to save the value
+                if (app.graph) {
+                  app.graph.setDirtyCanvas(true);
+                }
+                
+                console.log(`Shrug: Model selected and saved: ${value}`);
+              },
+              { values: [originalValue || "Select provider to load models"] }
             );
 
-            // Maintain widget order for consistent UX
+            // Maintain widget order
             const newIndex = this.widgets.indexOf(comboWidget);
             if (newIndex !== modelWidgetIndex) {
               const widget = this.widgets.splice(newIndex, 1)[0];
@@ -75,12 +109,28 @@ app.registerExtension({
             }
 
             this.llmModelWidget = comboWidget;
-            console.log("Shrug: Enhanced model selector initialized");
+            
+            // Restore last selected model if available
+            if (this.properties?.llm_model) {
+              comboWidget.value = this.properties.llm_model;
+              state.lastSelectedModel = this.properties.llm_model;
+            }
+            
+            console.log("Shrug: Model selector initialized with persistence");
           }
         };
 
         /**
-         * Enhanced model fetching with caching and robust error handling
+         * Show toast notifications for processing status
+         */
+        const showToast = (severity, summary, detail, life = 3000) => {
+          if (app.extensionManager.setting.get("shrug.show_processing_toast")) {
+            app.extensionManager.toast.add({ severity, summary, detail, life });
+          }
+        };
+
+        /**
+         * Enhanced model fetching with better UI feedback
          */
         const fetchAndPopulateModels = async (retryCount = 0) => {
           if (!this.llmModelWidget || state.isLoading) return;
@@ -94,10 +144,7 @@ app.registerExtension({
 
           // Validate required fields
           if (!provider || !baseUrl) {
-            this._updateModelWidget(
-              ["Configure provider and URL first"],
-              "Configure provider and URL first",
-            );
+            this._updateModelWidget(["Configure provider and URL first"], "Configure provider and URL first");
             state.isLoading = false;
             return;
           }
@@ -107,29 +154,26 @@ app.registerExtension({
           const cachedEntry = state.modelCache.get(cacheKey);
           if (isCacheValid(cachedEntry)) {
             console.log("Shrug: Using cached models");
-            this._updateModelWidget(cachedEntry.models, cachedEntry.models[0]);
+            this._updateModelWidget(cachedEntry.models, state.lastSelectedModel);
             state.isLoading = false;
+            showToast("info", "Models Loaded", `Using cached models for ${provider}`, 2000);
             return;
           }
 
-          // Update UI with loading state
-          const loadingText =
-            retryCount > 0
-              ? `Retrying... (${retryCount + 1})`
-              : "Loading models...";
+          // Show loading state
+          const loadingText = retryCount > 0 ? `Retrying... (${retryCount + 1})` : "Loading models...";
           this._updateModelWidget([loadingText], loadingText);
+          
+          if (retryCount === 0) {
+            showToast("info", "Loading Models", `Fetching models from ${provider}...`);
+          }
 
           try {
             console.log(`Shrug: Fetching models for ${provider} at ${baseUrl}`);
 
-            // Build request with timeout based on provider
-            const providerConfig =
-              PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.openai;
+            const providerConfig = PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.openai;
             const controller = new AbortController();
-            const timeoutId = setTimeout(
-              () => controller.abort(),
-              providerConfig.timeout,
-            );
+            const timeoutId = setTimeout(() => controller.abort(), providerConfig.timeout);
 
             const url = new URL("/shrug/get_models", window.location.origin);
             url.searchParams.append("provider", provider);
@@ -143,16 +187,13 @@ app.registerExtension({
 
             clearTimeout(timeoutId);
 
-            // Check if request is still current
             if (requestId !== state.lastRequestId) {
               console.log("Shrug: Request superseded, ignoring");
               return;
             }
 
             if (!response.ok) {
-              throw new Error(
-                `HTTP ${response.status}: ${response.statusText}`,
-              );
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -162,7 +203,7 @@ app.registerExtension({
               throw new Error("No models available");
             }
 
-            // Process and sort models (vision models first, then alphabetically)
+            // Process and sort models
             const sortedModels = this._sortModels(models);
 
             // Cache the results
@@ -171,32 +212,34 @@ app.registerExtension({
               timestamp: Date.now(),
             });
 
-            // Update UI
-            this._updateModelWidget(sortedModels);
-            this._logSuccess(sortedModels);
+            // Update UI and restore selection
+            this._updateModelWidget(sortedModels, state.lastSelectedModel);
+            
+            // Show success toast
+            const visionCount = sortedModels.filter(m => m.includes("(Vision)")).length;
+            const detail = visionCount > 0 
+              ? `Found ${sortedModels.length} models (${visionCount} with vision)`
+              : `Found ${sortedModels.length} models`;
+            showToast("success", "Models Loaded", detail);
+            
           } catch (error) {
             console.error("Shrug: Model fetch error:", error);
 
-            // Check if request is still current
             if (requestId !== state.lastRequestId) return;
 
-            // Handle errors with smart retry logic
-            const { shouldRetry, errorMessage } = this._handleFetchError(
-              error,
-              retryCount,
-            );
-
+            const { shouldRetry, errorMessage } = this._handleFetchError(error, retryCount);
             this._updateModelWidget([errorMessage], errorMessage);
+            
+            // Show error toast
+            showToast("error", "Model Loading Failed", errorMessage, 5000);
 
-            // For manual entry, revert to STRING widget after error
+            // Enable manual entry after failures
             if (retryCount >= state.retryDelays.length) {
-              console.log(
-                "Shrug: Enabling manual model entry after fetch failure",
-              );
+              console.log("Shrug: Enabling manual model entry after fetch failure");
               this._enableManualEntry();
             }
 
-            // Implement smart retry logic
+            // Retry logic
             if (shouldRetry && retryCount < state.retryDelays.length) {
               const delay = state.retryDelays[retryCount];
               console.log(`Shrug: Retrying in ${delay}ms...`);
@@ -214,30 +257,41 @@ app.registerExtension({
         };
 
         /**
-         * Helper methods for better code organization
+         * Update model widget and handle persistence
          */
         this._updateModelWidget = (models, selectedValue = null) => {
           if (!this.llmModelWidget) return;
 
           this.llmModelWidget.options.values = models;
 
-          if (selectedValue) {
+          if (selectedValue && models.includes(selectedValue)) {
+            // Restore previous selection if available
             this.llmModelWidget.value = selectedValue;
           } else {
             // Smart default selection
             const currentValue = this.llmModelWidget.value;
             if (models.includes(currentValue)) {
-              // Keep current if still valid
               this.llmModelWidget.value = currentValue;
             } else {
-              // Select first model, prefer vision models
+              // Prefer vision models
               const visionModels = models.filter((m) => m.includes("(Vision)"));
-              this.llmModelWidget.value =
-                visionModels.length > 0 ? visionModels[0] : models[0];
+              const defaultModel = visionModels.length > 0 ? visionModels[0] : models[0];
+              this.llmModelWidget.value = defaultModel;
+              
+              // Save the auto-selected model
+              this.properties = this.properties || {};
+              this.properties.llm_model = defaultModel;
+              state.lastSelectedModel = defaultModel;
             }
+          }
+          
+          // Ensure the value is saved
+          if (this.llmModelWidget.callback) {
+            this.llmModelWidget.callback(this.llmModelWidget.value);
           }
         };
 
+        // ... (keep all other helper methods from original: _extractModels, _sortModels, _handleFetchError, etc.)
         this._extractModels = (data) => {
           if (Array.isArray(data)) return data;
           if (data.error) throw new Error(data.error);
@@ -246,20 +300,17 @@ app.registerExtension({
         };
 
         this._sortModels = (models) => {
-          // Filter and validate models
           const validModels = models.filter(
             (model) =>
               typeof model === "string" &&
               !model.toLowerCase().includes("error") &&
               !model.toLowerCase().includes("timeout") &&
-              model.trim().length > 0,
+              model.trim().length > 0
           );
 
-          // Sort: vision models first, then alphabetically
           return validModels.sort((a, b) => {
             const aIsVision = a.includes("(Vision)");
             const bIsVision = b.includes("(Vision)");
-
             if (aIsVision && !bIsVision) return -1;
             if (!aIsVision && bIsVision) return 1;
             return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -273,10 +324,7 @@ app.registerExtension({
           if (error.name === "AbortError") {
             errorMessage = "Request timed out";
             shouldRetry = retryCount < 2;
-          } else if (
-            error.message.includes("Failed to fetch") ||
-            error.message.includes("NetworkError")
-          ) {
+          } else if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
             errorMessage = "Network error - check server";
             shouldRetry = retryCount < 1;
           } else if (error.message.includes("HTTP")) {
@@ -290,47 +338,31 @@ app.registerExtension({
           return { shouldRetry, errorMessage };
         };
 
-        this._logSuccess = (models) => {
-          const visionCount = models.filter((m) =>
-            m.includes("(Vision)"),
-          ).length;
-          const statusMsg =
-            visionCount > 0
-              ? `✓ Loaded ${models.length} models (${visionCount} with vision)`
-              : `✓ Loaded ${models.length} models`;
-          console.log(`Shrug: ${statusMsg}`);
-        };
-
         this._enableManualEntry = () => {
           if (!this.llmModelWidget) return;
-
-          // Update widget to indicate manual entry is available
+          
           this.llmModelWidget.options.values = ["Enter model name manually"];
-          this.llmModelWidget.value = "Enter model name manually";
-
-          // Make the combo widget editable
+          this.llmModelWidget.value = state.lastSelectedModel || "Enter model name manually";
+          
+          // Make editable
           if (this.llmModelWidget.inputEl) {
             this.llmModelWidget.inputEl.readOnly = false;
-            this.llmModelWidget.inputEl.placeholder =
-              "Type your model name here";
+            this.llmModelWidget.inputEl.placeholder = "Type your model name here";
+            
+            // Save manually entered values
+            this.llmModelWidget.inputEl.addEventListener("change", (e) => {
+              const value = e.target.value;
+              this.properties = this.properties || {};
+              this.properties.llm_model = value;
+              state.lastSelectedModel = value;
+              app.graph.setDirtyCanvas(true);
+              console.log(`Shrug: Manual model entry saved: ${value}`);
+            });
           }
-
-          console.log("Shrug: Manual model entry enabled");
         };
 
         /**
-         * Debounced fetch with smart timing
-         */
-        const debouncedFetch = (immediate = false) => {
-          clearTimeout(state.debounceTimer);
-          const delay = immediate ? 100 : 500; // Shorter delay for immediate requests
-          state.debounceTimer = setTimeout(() => {
-            fetchAndPopulateModels();
-          }, delay);
-        };
-
-        /**
-         * Bind events to trigger model fetching
+         * Bind events with auto-refresh support
          */
         const bindEvents = () => {
           const triggerWidgets = ["provider", "base_url", "api_key"];
@@ -340,17 +372,23 @@ app.registerExtension({
             if (widget) {
               const originalCallback = widget.callback;
               widget.callback = (...args) => {
-                // Call original callback
                 if (originalCallback) {
                   originalCallback.apply(widget, args);
                 }
 
-                // Smart defaults for provider changes
                 if (widgetName === "provider") {
                   this._updateProviderDefaults();
-                  debouncedFetch(true); // Immediate for provider changes
+                  if (app.extensionManager.setting.get("shrug.auto_refresh_models")) {
+                    fetchAndPopulateModels();
+                  }
                 } else {
-                  debouncedFetch();
+                  // Debounce for URL/API key changes
+                  clearTimeout(state.debounceTimer);
+                  state.debounceTimer = setTimeout(() => {
+                    if (app.extensionManager.setting.get("shrug.auto_refresh_models")) {
+                      fetchAndPopulateModels();
+                    }
+                  }, 500);
                 }
               };
               console.log(`Shrug: Bound events to ${widgetName} widget`);
@@ -358,47 +396,46 @@ app.registerExtension({
           });
         };
 
-        /**
-         * Update defaults based on selected provider
-         */
         this._updateProviderDefaults = () => {
           const provider = findWidget("provider")?.value;
           const baseUrlWidget = findWidget("base_url");
 
           if (provider && baseUrlWidget && PROVIDER_CONFIG[provider]) {
             const config = PROVIDER_CONFIG[provider];
-            // Only update if empty or still using localhost default
-            if (
-              !baseUrlWidget.value ||
-              baseUrlWidget.value.includes("localhost")
-            ) {
+            if (!baseUrlWidget.value || baseUrlWidget.value.includes("localhost")) {
               baseUrlWidget.value = config.defaultBaseUrl;
             }
           }
         };
 
-        // --- Main initialization sequence ---
+        // Override onSerialize to ensure model value is saved
+        const originalSerialize = this.onSerialize;
+        this.onSerialize = function(o) {
+          if (originalSerialize) {
+            originalSerialize.call(this, o);
+          }
+          // Ensure llm_model is saved
+          if (this.llmModelWidget) {
+            o.widgets_values = o.widgets_values || [];
+            const modelIndex = this.widgets.indexOf(this.llmModelWidget);
+            o.widgets_values[modelIndex] = this.llmModelWidget.value;
+          }
+        };
+
+        // Main initialization
         try {
           initializeWidgets.call(this);
           bindEvents.call(this);
 
-          // Initial fetch with slight delay for widget initialization
+          // Initial fetch
           setTimeout(() => {
             fetchAndPopulateModels();
           }, 250);
 
-          console.log(
-            "Shrug: Enhanced provider selector initialized successfully",
-          );
+          console.log("Shrug: Provider selector initialized with model persistence");
         } catch (error) {
           console.error("Shrug: Initialization error:", error);
-          // Graceful degradation - at least show the basic widget
-          if (this.llmModelWidget) {
-            this._updateModelWidget(
-              ["Initialization failed"],
-              "Initialization failed",
-            );
-          }
+          showToast("error", "Initialization Failed", error.message, 5000);
         }
       };
     }

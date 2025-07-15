@@ -1,15 +1,37 @@
 # In shrug-prompter/shrug_router.py
 try:
     # Try relative import first (for ComfyUI)
-    from .api.openai_api import send_request_openai
+    try:
+        # Try sync version first (avoids event loop issues)
+        from .api.openai_api_sync import send_request_openai
+    except ImportError:
+        try:
+            # Try fixed version
+            from .api.openai_api_fixed import send_request_openai
+        except ImportError:
+            try:
+                # Use optimized version if available
+                from .api.openai_api_optimized import send_request_openai
+            except ImportError:
+                # Fallback to standard version
+                from .api.openai_api import send_request_openai
 except ImportError:
     # Fallback to absolute import (for standalone testing)
-    from api.openai_api import send_request_openai
+    try:
+        from api.openai_api_sync import send_request_openai
+    except ImportError:
+        try:
+            from api.openai_api_fixed import send_request_openai
+        except ImportError:
+            try:
+                from api.openai_api_optimized import send_request_openai
+            except ImportError:
+                from api.openai_api import send_request_openai
 
 # As new providers are added, their API modules will be imported here.
 # e.g., from .api.gemini_api import send_request_gemini
 
-async def send_request(provider: str, **kwargs):
+def send_request(provider: str, **kwargs):
     """
     Routes the request to the correct provider-specific API module based on the
     'provider' string.
@@ -36,7 +58,7 @@ async def send_request(provider: str, **kwargs):
         if missing_params:
             return {"error": {"message": f"Missing required parameters: {missing_params}"}}
 
-        return await send_request_openai(**kwargs)
+        return send_request_openai(**kwargs)
 
     # Example of future expansion:
     # elif provider_lower == "gemini":

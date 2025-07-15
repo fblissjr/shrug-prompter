@@ -67,7 +67,7 @@ def get_models(provider, api_key, base_url):
 def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
     """
     Converts a ComfyUI IMAGE or MASK tensor batch to a list of Base64 strings.
-    
+
     Args:
         tensor_batch: The tensor batch to convert
         max_size: Maximum dimension for resizing (to reduce VRAM usage)
@@ -80,10 +80,10 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
     try:
         for i in range(tensor_batch.shape[0]):
             tensor = tensor_batch[i]
-            
+
             # Move to CPU and convert to numpy early to free GPU memory
             image_np = tensor.cpu().numpy()
-            
+
             # Clear the original tensor from memory if it was on GPU
             if tensor.device.type == 'cuda':
                 del tensor
@@ -124,7 +124,7 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
 
             # Create PIL image
             pil_image = Image.fromarray(image_np, mode=mode)
-            
+
             # Resize if too large to reduce memory usage
             if max(pil_image.size) > max_size:
                 # Calculate new size maintaining aspect ratio
@@ -135,16 +135,16 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
 
             # Convert to base64 with compression
             buffer = io.BytesIO()
-            
+
             # Use JPEG for RGB images to reduce size, PNG for others
             if mode in ['RGB', 'L']:
                 pil_image.save(buffer, format="JPEG", quality=quality, optimize=True)
             else:
                 pil_image.save(buffer, format="PNG", optimize=True)
-            
+
             b64_encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
             b64_list.append(b64_encoded)
-            
+
             # Clean up
             buffer.close()
             del pil_image, image_np
@@ -161,22 +161,8 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
 
     return b64_list
 
-def run_async(coro):
-    """Runs an async coroutine from a synchronous context."""
-    try:
-        # Try to get existing event loop
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If loop is already running, we need to use a different approach
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, coro)
-                return future.result()
-        else:
-            return loop.run_until_complete(coro)
-    except RuntimeError:
-        # No event loop exists, create a new one
-        return asyncio.run(coro)
+# Removed run_async - ComfyUI nodes should be synchronous
+# The send_request function in shrug_router.py is now synchronous
 
 def cleanup_gpu_memory():
     """Helper function to clean up GPU memory."""
