@@ -16,27 +16,38 @@ import base64
 class MemoryTracker:
     """Singleton memory tracker that monitors and cleans up automatically"""
     _instance = None
-    _tensors = weakref.WeakSet()
-    _arrays = weakref.WeakSet()
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._tensors = []
+            cls._instance._arrays = []
         return cls._instance
     
     def register_tensor(self, tensor):
         """Register a tensor for tracking"""
-        self._tensors.add(tensor)
+        # Use weak references in a list instead of WeakSet
+        # because tensors can't be hashed
+        try:
+            weak_ref = weakref.ref(tensor)
+            self._tensors.append(weak_ref)
+        except TypeError:
+            # Some tensors may not be weakly referenceable
+            pass
     
     def register_array(self, array):
         """Register a numpy array for tracking"""
-        self._arrays.add(array)
+        try:
+            weak_ref = weakref.ref(array)
+            self._arrays.append(weak_ref)
+        except TypeError:
+            pass
     
     def cleanup(self, force=False):
         """Clean up unused memory"""
-        # Clear dead references
-        self._tensors = weakref.WeakSet(t for t in self._tensors if t is not None)
-        self._arrays = weakref.WeakSet(a for a in self._arrays if a is not None)
+        # Clear dead references from lists
+        self._tensors = [ref for ref in self._tensors if ref() is not None]
+        self._arrays = [ref for ref in self._arrays if ref() is not None]
         
         if force or len(self._tensors) > 10 or len(self._arrays) > 10:
             gc.collect()
@@ -62,10 +73,12 @@ class VLMPrompter:
                 "user_prompt": ("STRING", {"multiline": True, "default": "Describe this image."}),
                 "max_tokens": ("INT", {"default": 512, "min": 1, "max": 2048}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "top_p": ("FLOAT", {"default": 0.95, "min": 0.0, "max": 1.0, "step": 0.01}),
             },
             "optional": {
                 "context": ("VLM_CONTEXT",),
                 "seed": ("INT", {"default": -1}),
+                "image_size": (["auto", "256", "384", "512", "768", "1024", "original"], {"default": "auto"}),
             }
         }
     
@@ -77,7 +90,7 @@ class VLMPrompter:
     def __init__(self):
         self._cache = weakref.WeakValueDictionary()
     
-    def process_images(self, images, system_prompt, user_prompt, max_tokens, temperature, context=None, seed=-1):
+    def process_images(self, images, system_prompt, user_prompt, max_tokens, temperature, top_p, context=None, seed=-1, image_size="auto"):
         """
         Process images with automatic memory management.
         Images are processed one at a time and memory is freed immediately.
@@ -93,7 +106,7 @@ class VLMPrompter:
             "responses": [],
             "metadata": {
                 "total_images": len(images) if hasattr(images, '__len__') else 1,
-                "model": context.get("llm_model", "unknown"),
+                "model": context.get("provider_config", {}).get("llm_model", "unknown") if isinstance(context, dict) and "provider_config" in context else context.get("llm_model", "unknown"),
                 "temperature": temperature,
                 "max_tokens": max_tokens
             }
@@ -109,7 +122,7 @@ class VLMPrompter:
                     # Process and immediately append result
                     response = self._process_single_image(
                         single_image, system_prompt, user_prompt, 
-                        max_tokens, temperature, context, seed
+                        max_tokens, temperature, top_p, context, seed, image_size
                     )
                     results["responses"].append(response)
                     
@@ -120,7 +133,7 @@ class VLMPrompter:
                 # Single image
                 response = self._process_single_image(
                     images, system_prompt, user_prompt,
-                    max_tokens, temperature, context, seed
+                    max_tokens, temperature, top_p, context, seed, image_size
                 )
                 results["responses"].append(response)
         
@@ -130,9 +143,9 @@ class VLMPrompter:
         
         return (results,)
     
-    def _process_single_image(self, image_tensor, system_prompt, user_prompt, max_tokens, temperature, context, seed):
+    def _process_single_image(self, image_tensor, system_prompt, user_prompt, max_tokens, temperature, top_p, context, seed, image_size):
         """Process a single image efficiently"""
-        # Convert to base64 without keeping intermediate copies
+        # Convert to raw bytes for multipart or base64 for standard
         with torch.no_grad():
             # Move to CPU if needed, but don't copy
             if image_tensor.is_cuda:
@@ -145,40 +158,90 @@ class VLMPrompter:
             image_np = (image_np * 255).astype(np.uint8)
             pil_image = Image.fromarray(image_np)
             
-            # Encode to base64
+            # Get raw JPEG bytes
             buffer = io.BytesIO()
             pil_image.save(buffer, format="JPEG", quality=85, optimize=True)
-            img_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            img_bytes = buffer.getvalue()
             buffer.close()
             
-            # Free the numpy array immediately
+            # Free the numpy array and PIL image immediately
             del image_np
             del pil_image
         
         # Make API call
+        import sys
+        import os
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+            
         try:
-            from ..shrug_router import send_request
-        except ImportError:
             from shrug_router import send_request
+        except ImportError:
+            from ..shrug_router import send_request
         
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": [
-                {"type": "text", "text": user_prompt},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
-            ]}
-        ]
+        # Check if we should use multipart (raw bytes) for better performance
+        # Import capability detector
+        try:
+            from ..api.capabilities_detector import CapabilityDetector
+        except ImportError:
+            CapabilityDetector = None
+        
+        # Handle both flat and nested context structures
+        if isinstance(context, dict) and "provider_config" in context:
+            provider_config = context["provider_config"]
+        else:
+            provider_config = context
+            
+        base_url = provider_config.get("base_url", "")
+        use_multipart = False
+        
+        if CapabilityDetector and base_url:
+            use_multipart = CapabilityDetector.should_use_multipart(base_url)
+        
+        if use_multipart:
+            # For multipart, we'll pass raw bytes
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": [
+                    {"type": "text", "text": user_prompt},
+                    {"type": "image_url", "image_url": {"url": "__RAW_IMAGE__"}}
+                ]}
+            ]
+        else:
+            # Standard base64 encoding
+            img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": [
+                    {"type": "text", "text": user_prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
+                ]}
+            ]
         
         kwargs = {
-            "provider": context["provider"],
-            "base_url": context["base_url"],
-            "api_key": context["api_key"],
-            "llm_model": context["llm_model"],
+            "provider": provider_config["provider"],
+            "base_url": provider_config["base_url"],
+            "api_key": provider_config["api_key"],
+            "llm_model": provider_config["llm_model"],
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
+            "top_p": top_p,
             "seed": seed if seed >= 0 else None
         }
+        
+        # Add raw images if using multipart
+        if use_multipart:
+            kwargs["raw_images"] = [img_bytes]
+            
+            # Use image_size parameter for server-side resizing
+            if image_size != "auto" and image_size != "original":
+                kwargs["resize_max"] = int(image_size)
+            
+            # Default quality settings for VLMPrompter
+            kwargs["image_quality"] = 85
+            kwargs["preserve_alpha"] = False
         
         try:
             response = send_request(**kwargs)
@@ -187,8 +250,10 @@ class VLMPrompter:
                 return response["choices"][0]["message"]["content"]
             return str(response)
         finally:
-            # Clean up the base64 string
-            del img_b64
+            # Clean up image data
+            del img_bytes
+            if 'img_b64' in locals():
+                del img_b64
 
 
 class VLMImageProcessor:
@@ -232,19 +297,30 @@ class VLMImageProcessor:
         # Register input for tracking
         memory_tracker.register_tensor(images)
         
+        count = images.shape[0] if images.dim() == 4 else 1
+        
         # Process based on mode
         if mode == "both":
-            # Need both versions - process efficiently
-            processed = self._process_for_vlm(images.clone(), target_size, jpeg_quality)
-            original = images
+            # Return processed and original separately
+            # Only clone if we need to resize, otherwise return views
+            if target_size is not None:
+                processed = self._process_for_vlm(images.clone(), target_size, jpeg_quality)
+                original = images
+            else:
+                # Both are the same, just return views
+                processed = images
+                original = images
         elif mode == "optimize_for_vlm":
-            processed = self._process_for_vlm(images, target_size, jpeg_quality)
-            original = images
+            if target_size is not None:
+                # Create new tensor only if resizing
+                processed = self._process_for_vlm(images.clone(), target_size, jpeg_quality)
+            else:
+                processed = images
+            # For VLM mode, we don't need original
+            original = processed  # Just a view, no copy
         else:  # prepare_for_video
             processed = self._process_for_video(images)
-            original = images
-        
-        count = images.shape[0] if images.dim() == 4 else 1
+            original = processed  # Just a view, no copy
         
         # Clean up
         memory_tracker.cleanup()
@@ -252,12 +328,15 @@ class VLMImageProcessor:
         return (processed, original, count)
     
     def _process_for_vlm(self, images, target_size, jpeg_quality):
-        """Optimize images for VLM processing"""
+        """Optimize images for VLM processing - operates on already cloned tensor"""
         if target_size is None:
             return images
         
-        # Process in-place when possible
         B, H, W, C = images.shape
+        
+        # Skip if already smaller than target
+        if max(H, W) <= target_size:
+            return images
         
         # Calculate new dimensions
         if H > W:
@@ -267,7 +346,7 @@ class VLMImageProcessor:
             new_w = target_size
             new_h = int(H * target_size / W)
         
-        # Resize efficiently
+        # Resize in-place on the cloned tensor
         images = images.permute(0, 3, 1, 2)  # BHWC to BCHW
         images = torch.nn.functional.interpolate(
             images, size=(new_h, new_w), mode='bilinear', align_corners=False
@@ -284,7 +363,8 @@ class VLMImageProcessor:
         new_w = (W // 8) * 8
         
         if new_h != H or new_w != W:
-            images = images[:, :new_h, :new_w, :]
+            # Return a view, not a copy - this is just cropping
+            return images[:, :new_h, :new_w, :]
         
         return images
 
@@ -295,7 +375,8 @@ class VLMResultCollector:
     Uses weak references to avoid keeping results in memory unnecessarily.
     """
     
-    _collectors = weakref.WeakValueDictionary()
+    def __init__(self):
+        self._collectors = {}
     
     @classmethod
     def INPUT_TYPES(cls):

@@ -16,10 +16,10 @@ class LoopAwareVLMAccumulator:
     Maintains state across iterations and handles batch/single responses.
     Compatible with the original BatchVLMAccumulator behavior.
     """
-    
+
     # Class-level storage for accumulator state
     _accumulators = {}
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -32,16 +32,16 @@ class LoopAwareVLMAccumulator:
                 "extract_mode": (["all", "responses_only", "first_response"], {"default": "responses_only"}),
             }
         }
-    
+
     RETURN_TYPES = ("ACCUMULATION", "LIST", "INT", "STRING")
     RETURN_NAMES = ("accumulator", "responses", "total_count", "debug_info")
     OUTPUT_IS_LIST = (False, True, False, False)
     FUNCTION = "accumulate_vlm"
     CATEGORY = "VLM/Loop"
-    
+
     def accumulate_vlm(self, context, accumulator_id="default", reset=False, extract_mode="responses_only"):
         """Accumulate VLM responses, handling both single and batch modes."""
-        
+
         # Initialize or reset accumulator
         if reset or accumulator_id not in self._accumulators:
             self._accumulators[accumulator_id] = {
@@ -53,11 +53,11 @@ class LoopAwareVLMAccumulator:
                     "total_responses": 0
                 }
             }
-        
+
         acc = self._accumulators[accumulator_id]
         responses_to_add = []
         debug_lines = []
-        
+
         # Handle different context types
         if isinstance(context, dict):
             # Check for VLMPrompter output format
@@ -65,7 +65,7 @@ class LoopAwareVLMAccumulator:
                 # New VLMPrompter format
                 batch_responses = context["responses"]
                 debug_lines.append(f"VLMPrompter format: {len(batch_responses)} responses")
-                
+
                 for response in batch_responses:
                     if extract_mode == "responses_only":
                         responses_to_add.append(response)
@@ -73,16 +73,16 @@ class LoopAwareVLMAccumulator:
                         responses_to_add.append(response)
                     else:  # all
                         responses_to_add.append(response)
-                
+
                 acc["metadata"]["total_batch"] += 1
                 acc["metadata"]["total_responses"] += len(batch_responses)
-            
+
             # Check for original ShrugPrompter format
             elif context.get("batch_mode", False) and "llm_responses" in context:
                 # Original batch mode
                 batch_responses = context.get("llm_responses", [])
                 debug_lines.append(f"ShrugPrompter batch: {len(batch_responses)} responses")
-                
+
                 for i, response in enumerate(batch_responses):
                     if extract_mode == "responses_only":
                         text = self._extract_text_from_response(response)
@@ -93,29 +93,29 @@ class LoopAwareVLMAccumulator:
                         break
                     else:  # all
                         responses_to_add.append(response)
-                
+
                 acc["metadata"]["total_batch"] += 1
                 acc["metadata"]["total_responses"] += len(batch_responses)
-            
+
             else:
                 # Single response mode
                 response = context.get("llm_response") or context.get("response")
                 if response:
                     debug_lines.append("Single response mode")
-                    
+
                     if extract_mode == "responses_only" or extract_mode == "first_response":
                         text = self._extract_text_from_response(response)
                         responses_to_add.append(text)
                     else:  # all
                         responses_to_add.append(response)
-                    
+
                     acc["metadata"]["total_single"] += 1
                     acc["metadata"]["total_responses"] += 1
-        
+
         # Add to accumulator
         acc["contexts"].append(context)
         acc["responses"].extend(responses_to_add)
-        
+
         # Build debug info
         debug_info = "\n".join([
             f"Accumulator ID: {accumulator_id}",
@@ -125,25 +125,25 @@ class LoopAwareVLMAccumulator:
             f"Batch mode calls: {acc['metadata']['total_batch']}",
             *debug_lines
         ])
-        
+
         # Create output accumulator
         output_acc = {
             "contexts": acc["contexts"].copy(),
             "responses": acc["responses"].copy(),
             "metadata": acc["metadata"].copy()
         }
-        
+
         # Clean up periodically
         if len(acc["contexts"]) % 10 == 0:
             memory_tracker.cleanup()
-        
+
         return (output_acc, acc["responses"], len(acc["responses"]), debug_info)
-    
+
     def _extract_text_from_response(self, response: Any) -> str:
         """Extract text content from various response formats."""
         if isinstance(response, str):
             return response
-        
+
         if isinstance(response, dict):
             # Try OpenAI format
             choices = response.get("choices", [])
@@ -153,12 +153,12 @@ class LoopAwareVLMAccumulator:
                     message = choice["message"]
                     if isinstance(message, dict) and "content" in message:
                         return message["content"]
-            
+
             # Try direct content
             for key in ["content", "text", "response", "output"]:
                 if key in response:
                     return str(response[key])
-        
+
         # Fallback
         return str(response)
 
@@ -168,7 +168,7 @@ class LoopAwareResponseIterator:
     Iterator that works with loop accumulators.
     Provides backward compatibility with BatchVLMResponseIterator.
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -177,17 +177,17 @@ class LoopAwareResponseIterator:
                 "index": ("INT", {"default": 0, "min": 0}),
             }
         }
-    
+
     RETURN_TYPES = ("STRING", "INT", "BOOLEAN", "STRING")
     RETURN_NAMES = ("response", "total_count", "has_more", "debug_info")
     FUNCTION = "get_response"
     CATEGORY = "VLM/Loop"
-    
+
     def get_response(self, accumulator, index=0):
         """Get a single response from the accumulator by index."""
         responses = accumulator.get("responses", [])
         total = len(responses)
-        
+
         if index < total:
             response = responses[index]
             has_more = index < (total - 1)
@@ -196,7 +196,7 @@ class LoopAwareResponseIterator:
             response = ""
             has_more = False
             debug = f"Index {index} out of range (total: {total})"
-        
+
         return (response, total, has_more, debug)
 
 
@@ -205,7 +205,7 @@ class EnhancedShrugPrompter:
     Enhanced version of ShrugPrompter that accepts template context.
     Maintains backward compatibility while adding memory management.
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -225,14 +225,14 @@ class EnhancedShrugPrompter:
                 "debug_mode": ("BOOLEAN", {"default": False}),
             }
         }
-    
+
     RETURN_TYPES = ("LLM_CONTEXT",)
     RETURN_NAMES = ("context",)
     FUNCTION = "generate"
     CATEGORY = "VLM/Core"
-    
-    def generate(self, images, user_prompt, max_tokens, temperature, top_p, 
-                batch_mode, processing_mode, context=None, system_prompt=None, 
+
+    def generate(self, images, user_prompt, max_tokens, temperature, top_p,
+                batch_mode, processing_mode, context=None, system_prompt=None,
                 mask=None, debug_mode=False):
         """
         Enhanced prompter that handles templates and maintains compatibility.
@@ -240,10 +240,10 @@ class EnhancedShrugPrompter:
         """
         # Import the original prompter logic
         from .prompter import ShrugPrompter
-        
+
         # Create instance to use its methods
         original_prompter = ShrugPrompter()
-        
+
         # If no context, create minimal one
         if context is None:
             context = {
@@ -252,31 +252,31 @@ class EnhancedShrugPrompter:
                 "api_key": "not-required",
                 "llm_model": "gemma3n-e4b-it"
             }
-        
+
         # Handle template context chaining
         if isinstance(context, dict) and "template" in context:
             # Template was loaded
             if system_prompt is None:
                 system_prompt = context.get("template", "You are a helpful assistant.")
-        
+
         # Add provider info if missing
         if isinstance(context, dict):
             if "provider" not in context:
                 context["provider"] = "openai"
             if "base_url" not in context:
                 context["base_url"] = "http://localhost:8080"
-        
+
         # Register images for memory tracking
         memory_tracker.register_tensor(images)
-        
+
         # Call original prompter logic
-        result = original_prompter.generate(
+        result = original_prompter.execute_prompt(
             system_prompt=system_prompt or "You are a helpful assistant.",
             user_prompt=user_prompt,
             max_tokens=max_tokens,
             temperature=temperature,
             top_p=top_p,
-            provider_config="{}", 
+            provider_config="{}",
             extra_params="{}",
             batch_mode=batch_mode,
             debug_mode=debug_mode,
@@ -286,10 +286,10 @@ class EnhancedShrugPrompter:
             images=images,
             mask=mask
         )
-        
+
         # Clean up after processing
         memory_tracker.cleanup()
-        
+
         return result
 
 
@@ -298,7 +298,7 @@ class RobustImageRangeExtractor:
     Robust version of GetImageRangeFromBatch that handles edge cases.
     Works with ForLoop indices and doesn't fail on boundary conditions.
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -311,12 +311,12 @@ class RobustImageRangeExtractor:
                 "masks": ("MASK",),
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("IMAGE", "MASK")
     FUNCTION = "extract_range"
     CATEGORY = "VLM/Utility"
-    
+
     def extract_range(self, images, num_frames=1, start_index=0, masks=None):
         """
         Extract range of images robustly, handling edge cases.
@@ -324,39 +324,39 @@ class RobustImageRangeExtractor:
         """
         if images.dim() != 4:
             raise ValueError(f"Expected 4D tensor (B,H,W,C), got {images.dim()}D")
-        
+
         batch_size = images.shape[0]
-        
+
         # Clamp start_index to valid range
         start_index = max(0, min(start_index, batch_size - 1))
-        
+
         # Calculate end index
         end_index = min(start_index + num_frames, batch_size)
         actual_frames = end_index - start_index
-        
+
         # If we can't extract any frames, return at least one
         if actual_frames <= 0:
             # Return the last frame if we're past the end
             start_index = max(0, batch_size - 1)
             end_index = batch_size
             actual_frames = 1
-        
+
         # Extract range
         image_range = images[start_index:end_index]
-        
+
         # Handle masks
         if masks is not None:
             if masks.dim() == 3:  # B,H,W
                 mask_range = masks[start_index:end_index]
             else:
                 # Create dummy mask
-                mask_range = torch.ones((actual_frames, images.shape[1], images.shape[2]), 
+                mask_range = torch.ones((actual_frames, images.shape[1], images.shape[2]),
                                       dtype=torch.float32, device=images.device)
         else:
             # Create dummy mask
-            mask_range = torch.ones((actual_frames, images.shape[1], images.shape[2]), 
+            mask_range = torch.ones((actual_frames, images.shape[1], images.shape[2]),
                                   dtype=torch.float32, device=images.device)
-        
+
         return (image_range, mask_range)
 
 
@@ -365,9 +365,9 @@ class AccumulationNodeCompat:
     Compatibility node for AccumulationNode/AccumulationGetItemNode patterns.
     Provides clean interface for prompt accumulation in loops.
     """
-    
+
     _storage = {}
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -384,12 +384,12 @@ class AccumulationNodeCompat:
                 "accumulator": ("ACCUMULATION",),
             }
         }
-    
+
     RETURN_TYPES = ("*", "ACCUMULATION")
     RETURN_NAMES = ("item", "accumulator")
     FUNCTION = "process"
     CATEGORY = "VLM/Loop"
-    
+
     def process(self, mode, accumulator_id, item=None, reset=False, index=0, accumulator=None):
         """
         Store or retrieve items from accumulation.
@@ -402,20 +402,20 @@ class AccumulationNodeCompat:
                     "items": [],
                     "metadata": {}
                 }
-            
+
             if item is not None:
                 self._storage[accumulator_id]["items"].append(item)
-            
+
             return (item, self._storage[accumulator_id])
-        
+
         else:
             # Get mode
             if accumulator is None and accumulator_id in self._storage:
                 accumulator = self._storage[accumulator_id]
-            
+
             if accumulator is None:
                 return (None, {"items": [], "metadata": {}})
-            
+
             items = accumulator.get("items", [])
             if 0 <= index < len(items):
                 return (items[index], accumulator)

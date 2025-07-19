@@ -7,11 +7,11 @@ Shrug-Prompter
 - Built with love for Bandoco (and the broader community), where I've learned a ton over the years, and where all the amazing innovation in this space is happening right now
 """
 
-# Core VLM Operations (4 nodes)
+# Core VLM Operations
 from .nodes.provider_selector import ShrugProviderSelector as VLMProviderConfig
 from .nodes.prompter import ShrugPrompter
 from .nodes.core_vlm_nodes import (
-    VLMPrompter,  # New memory-efficient version
+    VLMPrompter,  # Lightweight memory-efficient alternative
     VLMImageProcessor,
     VLMResultCollector,
     VLMResultIterator,
@@ -29,14 +29,24 @@ from .nodes.video_workflow_nodes import (
 from .nodes.prompt_template_loader import PromptTemplateLoader
 from .nodes.loop_accumulator import LoopSafeAccumulator  # Keep for ForLoop compatibility
 
-# Loop Compatibility (5 nodes)
+# Zero-copy Image nodes
+from .nodes.vlm_passthrough import VLMImagePassthrough, VLMImageResizer
+
+# Type helpers
+from .nodes.type_helpers import AnyTypePassthrough, ImageToAny
+from .nodes.text_list_converter import TextListToString, TextListIndexer
+
+# Advanced nodes
+from .nodes.advanced_sampler import AdvancedVLMSampler
+
+# Loop Compatibility
 from .nodes.loop_compatible_nodes import (
     LoopAwareVLMAccumulator,
     LoopAwareResponseIterator,
-    EnhancedShrugPrompter,
     RobustImageRangeExtractor,
     AccumulationNodeCompat,
 )
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -70,7 +80,7 @@ from .nodes.loop_compatible_nodes import (
 NODE_CLASS_MAPPINGS = {
     # Core VLM nodes
     "VLMProviderConfig": VLMProviderConfig,
-    "ShrugPrompter": EnhancedShrugPrompter,  # main prompter with all features
+    "ShrugPrompter": ShrugPrompter,  # main prompter with batch support
     "VLMPrompterFast": VLMPrompter,  # more lightweight alternative
     "VLMImageProcessor": VLMImageProcessor,
     "VLMResultCollector": VLMResultCollector,
@@ -85,12 +95,24 @@ NODE_CLASS_MAPPINGS = {
     # Utility Nodes
     "PromptTemplateLoader": PromptTemplateLoader,
     "LoopSafeAccumulator": LoopSafeAccumulator,
+    
+    # Zero-copy Image nodes
+    "VLMImagePassthrough": VLMImagePassthrough,
+    "VLMImageResizer": VLMImageResizer,
+    
+    # Type helpers
+    "ImageToAny": ImageToAny,
+    "TextListToString": TextListToString,
+    "TextListIndexer": TextListIndexer,
 
     # Loop Compatibility Nodes to deal with State Management
     "LoopAwareVLMAccumulator": LoopAwareVLMAccumulator,
     "LoopAwareResponseIterator": LoopAwareResponseIterator,
     "RobustImageRangeExtractor": RobustImageRangeExtractor,
     "AccumulationNodeCompat": AccumulationNodeCompat,
+
+    # Advanced nodes
+    "AdvancedVLMSampler": AdvancedVLMSampler,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -111,17 +133,30 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Utility Nodes
     "PromptTemplateLoader": "Prompt Template Loader",
     "LoopSafeAccumulator": "Loop Safe Accumulator",
+    
+    # Zero-copy Image nodes
+    "VLMImagePassthrough": "VLM Image Passthrough (Zero Copy)",
+    "VLMImageResizer": "VLM Image Resizer (Minimal)",
+    
+    # Type helpers
+    "ImageToAny": "Image to Any Type",
+    "TextListToString": "Text List to String",
+    "TextListIndexer": "Text List Indexer",
 
     # Loop Compatibility Nodes to deal with State Management
     "LoopAwareVLMAccumulator": "Loop Aware VLM Accumulator",
     "LoopAwareResponseIterator": "Loop Aware Response Iterator",
     "RobustImageRangeExtractor": "Robust Image Range Extractor",
     "AccumulationNodeCompat": "Accumulation Node Compat",
+
+    # Advanced nodes
+    "AdvancedVLMSampler": "Advanced VLM Sampler",
 }
 
 print(f"[Shrug-Prompter] Loaded {len(NODE_CLASS_MAPPINGS)} nodes")
 print("[Shrug-Prompter] Memory management: Automatic")
-print("[Shrug-Prompter] From 36 nodes → 17 essential nodes")
+print("[Shrug-Prompter] Zero-copy image processing enabled")
+print("[Shrug-Prompter] Server-side resize support added")
 
 # Add ComfyUI server routes for model fetching
 from aiohttp import web

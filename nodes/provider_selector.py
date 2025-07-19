@@ -32,7 +32,7 @@ class ShrugProviderSelector:
             }
         }
 
-    RETURN_TYPES = ("*",)
+    RETURN_TYPES = ("VLM_CONTEXT",)
     RETURN_NAMES = ("context",)
     FUNCTION = "create_context"
     CATEGORY = "Shrug Nodes/Config"
