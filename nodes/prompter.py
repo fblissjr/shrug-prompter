@@ -11,6 +11,7 @@ try:
     from utils import tensors_to_base64_list, tensors_to_raw_bytes_list
     from shrug_router import send_request
     from api.capabilities_detector import CapabilityDetector
+    from nodes.text_cleanup import TextCleanupNode
 except ImportError:
     # Try relative imports as fallback
     from ..utils import tensors_to_base64_list, tensors_to_raw_bytes_list
@@ -19,6 +20,10 @@ except ImportError:
         from ..api.capabilities_detector import CapabilityDetector
     except ImportError:
         CapabilityDetector = None
+    try:
+        from .text_cleanup import TextCleanupNode
+    except ImportError:
+        TextCleanupNode = None
 
 import hashlib
 import json
@@ -53,6 +58,7 @@ class ShrugPrompter:
                 "resize_height": ("INT", {"default": 512, "min": 128, "max": 2048, "step": 64, "tooltip": "Height for exact mode only"}),
                 "image_quality": ("INT", {"default": 85, "min": 1, "max": 100, "tooltip": "JPEG quality (1-100)"}),
                 "preserve_alpha": ("BOOLEAN", {"default": False, "tooltip": "Keep transparency, output PNG"}),
+                "response_cleanup": (["none", "basic", "standard", "strict"], {"default": "none", "tooltip": "none=no cleanup, basic=trim only, standard=trim+unicode+newlines, strict=ASCII only"}),
             },
         }
 
@@ -65,12 +71,13 @@ class ShrugPrompter:
     def __init__(self):
         self._cache = {}
         self._cache_max_size = 50
+        self._text_cleaner = None  # Reuse cleaner instance
 
     def execute_prompt(self, context, system_prompt, user_prompt, max_tokens, temperature, top_p, 
                           images=None, sampler_config=None, mask=None, metadata="{}", template_vars="{}", use_cache=True, debug_mode=False,
                           batch_mode=False, processing_mode="sequential", timeout=300, extra_api_params="{}", 
                           resize_mode="max", resize_value=512, resize_width=512, resize_height=512, 
-                          image_quality=85, preserve_alpha=False):
+                          image_quality=85, preserve_alpha=False, response_cleanup="none"):
 
         debug_info = []
         context["vlm_metadata"] = metadata
@@ -179,7 +186,7 @@ class ShrugPrompter:
                 response_data = self._build_and_execute_batch_request(
                     provider_config, processed_system, processed_user, image_b64_list, image_bytes_list,
                     mask_b64, max_tokens, temperature, top_p, top_k, repetition_penalty, processing_mode, debug_info, timeout, extra_params,
-                    resize_mode, resize_value, resize_width, resize_height, image_quality, preserve_alpha, use_multipart
+                    resize_mode, resize_value, resize_width, resize_height, image_quality, preserve_alpha, use_multipart, debug_mode
                 )
                 
                 # Store multiple responses for batch mode
@@ -201,7 +208,7 @@ class ShrugPrompter:
                     else:
                         debug_info.append("Text-only request (no images)")
                 
-                response_data = self._build_and_execute_request(provider_config, processed_system, processed_user, image_b64_list, image_bytes_list, mask_b64, max_tokens, temperature, top_p, top_k, repetition_penalty, timeout, extra_params, resize_mode, resize_value, resize_width, resize_height, image_quality, preserve_alpha, use_multipart)
+                response_data = self._build_and_execute_request(provider_config, processed_system, processed_user, image_b64_list, image_bytes_list, mask_b64, max_tokens, temperature, top_p, top_k, repetition_penalty, timeout, extra_params, resize_mode, resize_value, resize_width, resize_height, image_quality, preserve_alpha, use_multipart, debug_mode)
                 
                 # Log response
                 if "error" in response_data:
@@ -240,7 +247,18 @@ class ShrugPrompter:
                     # Check for standard response format
                     elif "choices" in resp and resp["choices"]:
                         text = resp["choices"][0].get("message", {}).get("content", "")
-                        response_list.append(text)
+                        # In batch mode, each response should be a single prompt
+                        # But still parse in case it returns JSON
+                        parsed = self._parse_response_smart(text, expected_count=1, debug_mode=debug_mode)
+                        if isinstance(parsed, list) and len(parsed) == 1:
+                            response_list.append(parsed[0])
+                        elif isinstance(parsed, list):
+                            # Unexpected - got multiple prompts from single image
+                            if debug_mode:
+                                print(f"[ShrugPrompter] Warning: Got {len(parsed)} prompts from single image")
+                            response_list.extend(parsed)
+                        else:
+                            response_list.append(parsed)
                     elif "error" in resp:
                         response_list.append(f"Error: {resp['error'].get('message', 'Unknown error')}")
                     else:
@@ -253,11 +271,51 @@ class ShrugPrompter:
             resp = context["llm_response"]
             if isinstance(resp, dict) and "choices" in resp and resp["choices"]:
                 text = resp["choices"][0].get("message", {}).get("content", "")
-                response_list.append(text)
+                # Smart parse the response - it might contain multiple prompts as JSON
+                parsed = self._parse_response_smart(text, expected_count=num_images, debug_mode=debug_mode)
+                if isinstance(parsed, list):
+                    response_list.extend(parsed)
+                else:
+                    response_list.append(parsed)
             elif isinstance(resp, dict) and "error" in resp:
                 response_list.append(f"Error: {resp['error'].get('message', 'Unknown error')}")
             else:
                 response_list.append(str(resp))
+        
+        # Apply cleanup if requested
+        if response_cleanup != "none" and TextCleanupNode:
+            cleanup_ops_map = {
+                "basic": "trim",
+                "standard": "trim,unicode,newlines,collapse", 
+                "strict": "trim,unicode,newlines,collapse,ascii"
+            }
+            
+            if response_cleanup in cleanup_ops_map:
+                operations = cleanup_ops_map[response_cleanup]
+                # Reuse cleaner instance
+                if not self._text_cleaner:
+                    self._text_cleaner = TextCleanupNode()
+                cleaner = self._text_cleaner
+                cleaned_list = []
+                
+                # Debug logging of raw vs cleaned
+                if debug_mode:
+                    print(f"\n[ShrugPrompter] === Response Cleanup ({response_cleanup}) ===")
+                
+                for i, text in enumerate(response_list):
+                    cleaned, original, _, _ = cleaner.cleanup_text(text, operations)
+                    cleaned_list.append(cleaned)
+                    
+                    if debug_mode and original != cleaned:
+                        print(f"\n[Response {i+1}] Raw:")
+                        print(f"  {repr(original[:200])}{'...' if len(original) > 200 else ''}")
+                        print(f"[Response {i+1}] Cleaned:")
+                        print(f"  {repr(cleaned[:200])}{'...' if len(cleaned) > 200 else ''}")
+                
+                response_list = cleaned_list
+                
+                if debug_mode:
+                    print(f"[ShrugPrompter] Cleanup complete - applied '{operations}'\n")
         
         # Get first response for convenience
         first_response = response_list[0] if response_list else ""
@@ -268,8 +326,22 @@ class ShrugPrompter:
         # Check if batch mode
         is_batch = context.get("batch_mode", False)
         
+        # Debug log final responses
+        if debug_mode:
+            print(f"\n[ShrugPrompter] === Final Responses ===")
+            for i, text in enumerate(response_list):
+                # Show actual characters, not escape sequences
+                preview = text[:150] + "..." if len(text) > 150 else text
+                print(f"[{i+1}] {preview}")
+            print()
+        
         # Format debug info
         debug_output = "\n".join(debug_info) if debug_info else "No debug info"
+        
+        # Store cleaned responses in context for accumulator compatibility
+        # Only store if cleanup was applied to avoid duplication
+        if response_cleanup != "none":
+            context["cleaned_responses"] = response_list
         
         print(f"[ShrugPrompter] === VLM Request Complete ===\n")
         return (context, response_list, first_response, response_count, is_batch, debug_output, images)
@@ -311,8 +383,73 @@ class ShrugPrompter:
         if mask is None: return None
         masks = tensors_to_base64_list(mask)
         return masks[0] if masks else None
+    
+    def _parse_response_smart(self, text, expected_count=None, debug_mode=False):
+        """
+        Intelligently parse response text that might contain JSON arrays or objects.
+        Returns a list of prompts if multiple are detected, or the original text.
+        """
+        # First, try to detect if this looks like JSON
+        text_stripped = text.strip()
+        if not (text_stripped.startswith('[') or text_stripped.startswith('{')):
+            # Not JSON, return as-is
+            return text
+        
+        try:
+            # Try to parse as JSON
+            parsed = json.loads(text_stripped)
+            
+            # Case 1: Direct array of strings
+            if isinstance(parsed, list):
+                if all(isinstance(item, str) for item in parsed):
+                    if debug_mode:
+                        print(f"[ShrugPrompter] Detected JSON array with {len(parsed)} prompts")
+                    return parsed
+                # Array of objects - try to extract text fields
+                elif all(isinstance(item, dict) for item in parsed):
+                    prompts = []
+                    for item in parsed:
+                        # Look for common field names
+                        for field in ['prompt', 'text', 'content', 'description', 'caption']:
+                            if field in item:
+                                prompts.append(str(item[field]))
+                                break
+                    if prompts and len(prompts) == len(parsed):
+                        if debug_mode:
+                            print(f"[ShrugPrompter] Extracted {len(prompts)} prompts from JSON objects")
+                        return prompts
+            
+            # Case 2: Object with prompts array
+            elif isinstance(parsed, dict):
+                for field in ['prompts', 'results', 'outputs', 'texts', 'captions']:
+                    if field in parsed and isinstance(parsed[field], list):
+                        if all(isinstance(item, str) for item in parsed[field]):
+                            if debug_mode:
+                                print(f"[ShrugPrompter] Found {len(parsed[field])} prompts in JSON.{field}")
+                            return parsed[field]
+                
+                # Single prompt in object
+                for field in ['prompt', 'text', 'content', 'result', 'output']:
+                    if field in parsed:
+                        if debug_mode:
+                            print(f"[ShrugPrompter] Found single prompt in JSON.{field}")
+                        return str(parsed[field])
+            
+            # If we expected a certain count and got it, return the parsed result
+            if expected_count and isinstance(parsed, list) and len(parsed) == expected_count:
+                if debug_mode:
+                    print(f"[ShrugPrompter] JSON array matches expected count {expected_count}")
+                return [str(item) for item in parsed]
+            
+        except json.JSONDecodeError:
+            if debug_mode:
+                print(f"[ShrugPrompter] Text looks like JSON but failed to parse")
+            pass
+        
+        # Return original text if no smart parsing applied
+        return text
 
-    def _build_and_execute_batch_request(self, provider_config, system, user, images_b64, images_bytes, mask, max_tokens, temp, top_p, top_k, repetition_penalty, processing_mode, debug_info, timeout=300, extra_params=None, resize_mode="max", resize_value=512, resize_width=512, resize_height=512, image_quality=85, preserve_alpha=False, use_multipart=False):
+    def _build_and_execute_batch_request(self, provider_config, system, user, images_b64, images_bytes, mask, max_tokens, temp, top_p, top_k, repetition_penalty, processing_mode, debug_info, timeout=300, extra_params=None, resize_mode="max", resize_value=512, resize_width=512, resize_height=512, image_quality=85, preserve_alpha=False, use_multipart=False, debug_mode=False):
         """Execute batch request as separate API calls - simpler and more memory efficient"""
         import gc
         
@@ -452,7 +589,7 @@ class ShrugPrompter:
             "processing_mode": processing_mode
         }
 
-    def _build_and_execute_request(self, provider_config, system, user, images_b64, images_bytes, mask, max_tokens, temp, top_p, top_k, repetition_penalty, timeout=300, extra_params=None, resize_mode="max", resize_value=512, resize_width=512, resize_height=512, image_quality=85, preserve_alpha=False, use_multipart=False):
+    def _build_and_execute_request(self, provider_config, system, user, images_b64, images_bytes, mask, max_tokens, temp, top_p, top_k, repetition_penalty, timeout=300, extra_params=None, resize_mode="max", resize_value=512, resize_width=512, resize_height=512, image_quality=85, preserve_alpha=False, use_multipart=False, debug_mode=False):
         if use_multipart and images_bytes:
             # For multipart, use placeholders
             user_content = [{"type": "text", "text": user}]
@@ -506,5 +643,31 @@ class ShrugPrompter:
         # Merge extra parameters
         if extra_params:
             kwargs.update(extra_params)
+        
+        # Debug logging
+        if debug_mode:
+            print(f"\n[ShrugPrompter] === API Request Debug ===")
+            print(f"Model: {provider_config['llm_model']}")
+            print(f"Provider: {provider_config['provider']}")
+            print(f"Max tokens: {max_tokens}")
+            print(f"Temperature: {temp}")
+            print(f"Images: {len(images_b64 or images_bytes or [])} {'(multipart)' if use_multipart else '(base64)'}")
+            if resize_mode != "none":
+                print(f"Resize: {resize_mode} = {resize_value if resize_mode != 'exact' else f'{resize_width}x{resize_height}'}")
+            print(f"\nSystem prompt: {system[:100]}..." if len(system) > 100 else f"System prompt: {system}")
+            print(f"User prompt: {user[:100]}..." if len(user) > 100 else f"User prompt: {user}")
             
-        return send_request(**kwargs)
+        response = send_request(**kwargs)
+        
+        # Debug log raw response
+        if debug_mode:
+            print(f"\n[ShrugPrompter] === API Response Debug ===")
+            if "error" in response:
+                print(f"Error: {response['error']}")
+            elif "choices" in response and response["choices"]:
+                content = response["choices"][0].get("message", {}).get("content", "")
+                print(f"Response content ({len(content)} chars):")
+                print(f"{repr(content[:200])}{'...' if len(content) > 200 else ''}")
+            print()
+            
+        return response

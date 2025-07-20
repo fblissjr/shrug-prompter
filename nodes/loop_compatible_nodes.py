@@ -60,8 +60,25 @@ class LoopAwareVLMAccumulator:
 
         # Handle different context types
         if isinstance(context, dict):
+            # Check for cleaned responses first (from ShrugPrompter with cleanup)
+            if "cleaned_responses" in context and isinstance(context["cleaned_responses"], list):
+                # Use pre-cleaned responses
+                batch_responses = context["cleaned_responses"]
+                debug_lines.append(f"Using cleaned responses: {len(batch_responses)} responses")
+                
+                for response in batch_responses:
+                    if extract_mode == "responses_only":
+                        responses_to_add.append(response)
+                    elif extract_mode == "first_response" and len(responses_to_add) == 0:
+                        responses_to_add.append(response)
+                    else:  # all
+                        responses_to_add.append(response)
+                
+                acc["metadata"]["total_single"] += 1
+                acc["metadata"]["total_responses"] += len(batch_responses)
+                
             # Check for VLMPrompter output format
-            if "responses" in context and isinstance(context["responses"], list):
+            elif "responses" in context and isinstance(context["responses"], list):
                 # New VLMPrompter format
                 batch_responses = context["responses"]
                 debug_lines.append(f"VLMPrompter format: {len(batch_responses)} responses")
@@ -136,6 +153,15 @@ class LoopAwareVLMAccumulator:
         # Clean up periodically
         if len(acc["contexts"]) % 10 == 0:
             memory_tracker.cleanup()
+            
+        # Clean up old accumulators if too many exist
+        if len(self._accumulators) > 10:
+            # Keep only the 5 most recently used
+            sorted_ids = sorted(self._accumulators.keys(), 
+                              key=lambda k: len(self._accumulators[k]["contexts"]), 
+                              reverse=True)
+            for old_id in sorted_ids[5:]:
+                del self._accumulators[old_id]
 
         return (output_acc, acc["responses"], len(acc["responses"]), debug_info)
 

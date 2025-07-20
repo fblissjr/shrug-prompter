@@ -47,6 +47,9 @@ from .nodes.loop_compatible_nodes import (
     AccumulationNodeCompat,
 )
 
+# Text Cleanup
+from .nodes.text_cleanup import TextCleanupNode, TextListCleanupNode
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -104,6 +107,10 @@ NODE_CLASS_MAPPINGS = {
     "ImageToAny": ImageToAny,
     "TextListToString": TextListToString,
     "TextListIndexer": TextListIndexer,
+    
+    # Text Cleanup
+    "TextCleanup": TextCleanupNode,
+    "TextListCleanup": TextListCleanupNode,
 
     # Loop Compatibility Nodes to deal with State Management
     "LoopAwareVLMAccumulator": LoopAwareVLMAccumulator,
@@ -142,6 +149,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageToAny": "Image to Any Type",
     "TextListToString": "Text List to String",
     "TextListIndexer": "Text List Indexer",
+    
+    # Text Cleanup
+    "TextCleanup": "Text Cleanup",
+    "TextListCleanup": "Text List Cleanup",
 
     # Loop Compatibility Nodes to deal with State Management
     "LoopAwareVLMAccumulator": "Loop Aware VLM Accumulator",
