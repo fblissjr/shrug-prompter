@@ -2,11 +2,11 @@
 
 Clean, memory-efficient VLM nodes for ComfyUI, with state management, looping, keyframe extraction, batching, and built-in templates for Wan2.1, VACE, and beyond.
 
-Initially built and tested with my local (OpenAI API compatible and sorta ollama compatible) vision LLM server, https://github.com/fblissjr/heylookitsanllm, which works with any GGUF or MLX model.
+Initially built and tested with my local (OpenAI API compatible and sorta ollama compatible) vision LLM server, https://github.com/fblissjr/heylookitsanllm, which works with any GGUF or MLX model. But it'll work with any OpenAI-compatible API endpoint - local or cloud.
 
-Built for Wan2.1, VACE, and FLUX Kontext, but obviously can be extended beyond that.
+Built for Wan2.1, WAN VACE, and FLUX Kontext, but obviously can be extended beyond that. The nodes are generic enough to work with any workflow that needs vision-to-text capabilities.
 
-Handles State Management Looping, Batching, Keyframe Extraction, and many more edge cases that drove me crazy when building this project.
+Handles State Management Looping, Batching, Keyframe Extraction, and many more edge cases that drove me crazy when building this project. If you've ever tried to get VLMs working properly inside ComfyUI loops, you know the pain.
 
 Built with love for Bandoco (and the broader community), where I've learned a ton over the years, and where all the amazing innovation in this space is happening right now.
 
@@ -54,11 +54,99 @@ That all said, the nodes are modular, and you can load your own prompt templates
 
 ## Core Nodes
 
+### VLM Configuration & Processing
+
 **VLM Provider Config** - Set your API endpoint and model
+- Point to any OpenAI-compatible endpoint (local or cloud)
+- Auto-detects server capabilities for optimal performance
+- Works with heylookllm, ollama, or cloud providers
+
 **Shrug Prompter** - Main VLM interface with template support
-**VLM Image Processor** - Prep images for VLM (resize, optimize)
-**Video Frame Pair Extractor** - Get start/end frame pairs
+- Smart batch processing - handles single images or batches automatically
+- Built-in response cleanup (trim spaces, fix unicode, etc)
+- Server-side image resizing for 57ms faster processing
+- Template support for consistent prompting
+- Debug mode shows raw API requests/responses
+- Smart JSON parsing - automatically extracts prompts from various response formats
+
+**VLM Image Processor** - All-in-one image prep (replaces 5 old nodes)
+- Handles any aspect ratio and size
+- Smart memory management
+- Optional preprocessing for specific models
+
+**VLM Image Passthrough** - Zero-copy alternative
+- Use this when you don't need preprocessing
+- Passes images directly to VLM without copies
+- Massive memory savings for large batches
+
+### Video & Frame Management
+
+**Video Frame Pair Extractor** - Get consecutive frame pairs for interpolation
+- Works inside ForLoop structures
+- Handles edge cases (like odd frame counts)
+- Outputs start/end frames for each transition
+
+**Smart Image Range Extractor** - Robust frame extraction
+- Never fails on out-of-bounds indices
+- Handles single images, empty batches
+- Works with dynamic loop indices
+
+**Video Segment Assembler** - Reassemble video segments
+- Multiple streaming modes
+- Handles overlapping segments
+- Preserves temporal coherence
+
+### Loop & Accumulation
+
 **Loop Aware VLM Accumulator** - Collect results across loop iterations
+- Works properly inside ForLoop structures
+- Handles both single and batch responses
+- Optional reset to clear previous runs
+- Extracts cleaned responses automatically
+
+**Loop Aware Response Iterator** - Access accumulated results by index
+- Syncs with ForLoop indices
+- Handles empty results gracefully
+- Backward compatible with old workflows
+
+**Loop Safe Accumulator** - Original accumulator for simple cases
+- Use when you need basic accumulation
+- No persistence between runs
+
+### Text Processing
+
+**Text Cleanup** - Clean LLM responses
+- Remove leading/trailing spaces
+- Fix unicode characters (smart quotes → regular quotes)
+- Remove newlines, collapse whitespace
+- Strip to ASCII-only if needed
+- Custom replacements via simple patterns
+
+**Text List Cleanup** - Same but for lists of text
+- Process batch responses
+- Join with custom separators (like "|" for WAN)
+- Maintain order and indexing
+
+**Text List Indexer** - Extract single item from list
+- Essential for connecting VLM lists to nodes expecting strings
+- Handles out-of-bounds gracefully
+
+### Utilities
+
+**Prompt Template Loader** - Load markdown templates
+- Searches templates/ directory recursively
+- Supports YAML frontmatter for metadata
+- Templates can be few-shot or zero-shot
+
+**Auto Memory Manager** - Automatic cleanup
+- Place after heavy operations
+- Multiple aggression levels
+- Works with PyTorch and system memory
+
+**Advanced VLM Sampler** - Fine-tune generation
+- Extra parameters like top_k, repetition_penalty
+- Processing modes for different use cases
+- Returns config dict for reuse
 
 ## Templates
 
@@ -67,12 +155,37 @@ Pre-built prompt templates in `templates/`:
 - `cinematographer.md` - Cinematic shot descriptions
 - Add your own!
 
-## Tips
+## Tips & Best Practices
 
+### Getting Started
 - Start heylookitsanllm first: `heylookllm --api openai` (or use your own)
 - Use VLM models with vision support (look for "(Vision)" in dropdown)
 - For video workflows: keyframes → frame pairs → prompts → video
 - Memory is managed automatically - just connect and go
+
+### Performance Tips
+- Use `VLMImagePassthrough` instead of `VLMImageProcessor` when you don't need preprocessing
+- Enable `batch_mode=true` in ShrugPrompter for multiple images
+- Set `resize_mode="max"` with `resize_value=512` for fast processing
+- The multipart endpoint is auto-detected and 57ms faster per image
+
+### Working with Loops
+- Always connect FLOW_CONTROL from ForLoopOpen to ForLoopClose
+- Use `reset=true` on accumulators if you don't want persistence
+- Place AutoMemoryManager after heavy operations in loops
+- Loop indices are 0-based, plan accordingly
+
+### Text Cleanup
+- Use `response_cleanup="standard"` for WAN/VACE compatibility
+- `"basic"` just trims whitespace
+- `"strict"` removes all non-ASCII characters
+- Custom cleanup with TextCleanup node for specific needs
+
+### Debugging
+- Enable `debug_mode=true` in ShrugPrompter to see API calls
+- Add ShowText nodes to inspect intermediate values
+- Check accumulator debug_info output for state tracking
+- Timeout: Default 5 minutes per request (configurable in ShrugPrompter node)
 
 ## Requirements
 

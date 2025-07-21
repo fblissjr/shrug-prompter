@@ -1,0 +1,1506 @@
+{
+  "id": "1b6497f7-4bca-4c42-8ef4-711e67fc8ebb",
+  "revision": 0,
+  "last_node_id": 31,
+  "last_link_id": 34,
+  "nodes": [
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        300
+      ],
+      "size": [
+        214.080078125,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "keyframe1.png",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        550
+      ],
+      "size": [
+        214.080078125,
+        200
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "keyframe2.png",
+        "image"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        800
+      ],
+      "size": [
+        214.080078125,
+        200
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "keyframe3.png",
+        "image"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        1050
+      ],
+      "size": [
+        214.080078125,
+        200
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "keyframe4.png",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "ImageBatch",
+      "pos": [
+        300,
+        450
+      ],
+      "size": [
+        150,
+        50
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 7,
+      "type": "ImageBatch",
+      "pos": [
+        300,
+        700
+      ],
+      "size": [
+        150,
+        50
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 8,
+      "type": "ImageBatch",
+      "pos": [
+        500,
+        575
+      ],
+      "size": [
+        150,
+        50
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 9,
+      "type": "VLMImagePassthrough",
+      "pos": [
+        700,
+        575
+      ],
+      "size": [
+        272.5542907714844,
+        82
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            8,
+            20
+          ]
+        },
+        {
+          "name": "original",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "count",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMImagePassthrough",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "VLMProviderConfig",
+      "pos": [
+        50,
+        1300
+      ],
+      "size": [
+        350,
+        170
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "slot_index": 0,
+          "links": [
+            31
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMProviderConfig",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "not-required",
+        "qwen2.5-vl"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "ForLoopOpen",
+      "pos": [
+        950,
+        500
+      ],
+      "size": [
+        210,
+        158
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "initial_value1",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value2",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value3",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value4",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "flow_control",
+          "type": "FLOW_CONTROL",
+          "slot_index": 0,
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "remaining",
+          "type": "INT",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "value1",
+          "type": "*",
+          "slot_index": 2,
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "value2",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "value3",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "value4",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "BadCafeCode/execution-inversion-demo-comfyui",
+        "ver": "d9eebfaa1a6a33067e8c9108ef093b48279c4cbb",
+        "Node name for S&R": "ForLoopOpen",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        3
+      ]
+    },
+    {
+      "id": 13,
+      "type": "VideoFramePairExtractor",
+      "pos": [
+        1200,
+        575
+      ],
+      "size": [
+        250,
+        186
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        },
+        {
+          "name": "pair_index",
+          "type": "INT",
+          "widget": {
+            "name": "pair_index"
+          },
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "start_frame",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "end_frame",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "total_pairs",
+          "type": "INT",
+          "slot_index": 2,
+          "links": null
+        },
+        {
+          "name": "has_more",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VideoFramePairExtractor",
+        "widget_ue_connectable": {
+          "pair_index": true
+        }
+      },
+      "widgets_values": [
+        "sequential_pairs",
+        0,
+        1
+      ]
+    },
+    {
+      "id": 14,
+      "type": "ImageBatch",
+      "pos": [
+        1500,
+        575
+      ],
+      "size": [
+        150,
+        50
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            32
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "LoopAwareVLMAccumulator",
+      "pos": [
+        2150,
+        650
+      ],
+      "size": [
+        300,
+        166
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "link": 34
+        }
+      ],
+      "outputs": [
+        {
+          "name": "accumulator",
+          "type": "ACCUMULATION",
+          "slot_index": 0,
+          "links": [
+            21
+          ]
+        },
+        {
+          "name": "responses",
+          "shape": 6,
+          "type": "LIST",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "total_count",
+          "type": "INT",
+          "slot_index": 2,
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "slot_index": 3,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "LoopAwareVLMAccumulator",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "wan_prompts",
+        true,
+        "responses_only"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "ForLoopClose",
+      "pos": [
+        2500,
+        650
+      ],
+      "size": [
+        200,
+        106
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "flow_control",
+          "type": "FLOW_CONTROL",
+          "link": 12
+        },
+        {
+          "name": "initial_value1",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value2",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value3",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "initial_value4",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value1",
+          "type": "*",
+          "slot_index": 0,
+          "links": null
+        },
+        {
+          "name": "value2",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "value3",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "value4",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "BadCafeCode/execution-inversion-demo-comfyui",
+        "ver": "d9eebfaa1a6a33067e8c9108ef093b48279c4cbb",
+        "Node name for S&R": "ForLoopClose",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "LoopAwareResponseIterator",
+      "pos": [
+        2150,
+        900
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "accumulator",
+          "type": "ACCUMULATION",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            22
+          ]
+        },
+        {
+          "name": "total_count",
+          "type": "INT",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "has_more",
+          "type": "BOOLEAN",
+          "slot_index": 2,
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "LoopAwareResponseIterator",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 20,
+      "type": "TextListCleanup",
+      "pos": [
+        2500,
+        900
+      ],
+      "size": [
+        300,
+        220
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_list",
+          "type": "LIST",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cleaned_list",
+          "type": "LIST",
+          "slot_index": 0,
+          "links": [
+            25
+          ]
+        },
+        {
+          "name": "original_list",
+          "type": "LIST",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "cleaned_joined",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "operations_applied",
+          "type": "STRING",
+          "slot_index": 3,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "TextListCleanup",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "trim,unicode,newlines,collapse",
+        "|",
+        "",
+        0
+      ]
+    },
+    {
+      "id": 21,
+      "type": "ShowText",
+      "pos": [
+        2850,
+        900
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 23,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ShowText"
+      },
+      "widgets_values": [
+        "All prompts joined with | for WAN/VACE"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "Note",
+      "pos": [
+        950,
+        350
+      ],
+      "size": [
+        600,
+        100
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "CRITICAL: ForLoop runs N-1 times for N keyframes (3 iterations for 4 frames)\nEach iteration extracts a consecutive pair and generates a transition prompt"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 23,
+      "type": "Note",
+      "pos": [
+        1700,
+        1100
+      ],
+      "size": [
+        800,
+        250
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Next Steps for Complete WAN/VACE Integration:\n\n1. Connect cleaned_list output to a second ForLoop for video generation\n2. In the video loop, use TextListIndexer to get prompt[i] for each segment\n3. Feed to WanVideoTextEncode → WAN video generation nodes\n4. VideoSegmentAssembler to combine all segments into final video\n\nThe prompts generated here describe transitions:\n- Prompt 0: keyframe1 → keyframe2 transition\n- Prompt 1: keyframe2 → keyframe3 transition  \n- Prompt 2: keyframe3 → keyframe4 transition\n\nEach prompt is used to generate one video segment that bridges consecutive keyframes."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 24,
+      "type": "Note",
+      "pos": [
+        800,
+        1300
+      ],
+      "size": [
+        600,
+        150
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Performance Features Enabled:\n- VLMImagePassthrough: Zero-copy image handling\n- Server-side resize: resize_mode='max', resize_value=512\n- response_cleanup='standard': Removes spaces, fixes unicode\n- Accumulator reset=true: Prevents cross-run persistence\n- TextListCleanup: Ensures WAN-compatible prompt formatting"
+      ],
+      "color": "#243",
+      "bgcolor": "#354"
+    },
+    {
+      "id": 25,
+      "type": "PreviewImage",
+      "pos": [
+        700,
+        700
+      ],
+      "size": [
+        200,
+        250
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 20
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "PreviewImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 26,
+      "type": "TextListIndexer",
+      "pos": [
+        2850,
+        1150
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_list",
+          "type": "LIST",
+          "link": 25
+        },
+        {
+          "name": "index",
+          "type": "INT",
+          "widget": {
+            "name": "index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            26
+          ]
+        },
+        {
+          "name": "list_length",
+          "type": "INT",
+          "slot_index": 1,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "TextListIndexer",
+        "widget_ue_connectable": {
+          "index": true
+        }
+      },
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 27,
+      "type": "ShowText",
+      "pos": [
+        3200,
+        1150
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 26,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ShowText"
+      },
+      "widgets_values": [
+        "Example: Individual prompt for WAN encoding"
+      ]
+    },
+    {
+      "id": 31,
+      "type": "ShrugPrompter",
+      "pos": [
+        1708.5440673828125,
+        275.1138610839844
+      ],
+      "size": [
+        400,
+        754
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "link": 31
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 32
+        },
+        {
+          "name": "sampler_config",
+          "shape": 7,
+          "type": "SAMPLER_CONFIG",
+          "link": null
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "system_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "system_prompt"
+          },
+          "link": 33
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            34
+          ]
+        },
+        {
+          "name": "response_texts",
+          "type": "LIST",
+          "links": null
+        },
+        {
+          "name": "first_response",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "response_count",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "is_batch_mode",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "ShrugPrompter"
+      },
+      "widgets_values": [
+        "",
+        "",
+        512,
+        1,
+        0.95,
+        "{}",
+        "{}",
+        true,
+        false,
+        false,
+        "sequential",
+        300,
+        "{}",
+        "max",
+        512,
+        512,
+        512,
+        85,
+        false,
+        "none"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "PromptTemplateLoader",
+      "pos": [
+        450,
+        1300
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "prompt_text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            33
+          ]
+        },
+        {
+          "name": "metadata",
+          "type": "STRING",
+          "slot_index": 1,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "PromptTemplateLoader",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "wan_prompt_rewriter-instruct.md"
+      ]
+    },
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        375.7555847167969,
+        -18.355270385742188
+      ],
+      "size": [
+        800,
+        200
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "WAN/VACE VLM Integration with All Improvements\n\nThis workflow demonstrates the complete pattern for replacing manual prompts with VLM-generated prompts:\n1. Load keyframes → Batch into single image set\n2. Use VLMImagePassthrough for zero-copy operation\n3. ForLoop iterates through frame pairs (N-1 iterations for N keyframes)\n4. VLM analyzes each pair and generates transition prompts\n5. Accumulator collects all prompts with proper cleanup\n6. Text cleanup and joining for WAN compatibility (| separator)\n\nKey improvements: server-side resize, response cleanup, proper loop structure, memory efficiency"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      6,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      7,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      7,
+      0,
+      8,
+      1,
+      "IMAGE"
+    ],
+    [
+      7,
+      8,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      9,
+      0,
+      13,
+      0,
+      "IMAGE"
+    ],
+    [
+      11,
+      12,
+      0,
+      13,
+      1,
+      "INT"
+    ],
+    [
+      12,
+      12,
+      2,
+      18,
+      0,
+      "FLOW_CONTROL"
+    ],
+    [
+      13,
+      13,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      13,
+      1,
+      14,
+      1,
+      "IMAGE"
+    ],
+    [
+      20,
+      9,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ],
+    [
+      21,
+      16,
+      0,
+      19,
+      0,
+      "ACCUMULATION"
+    ],
+    [
+      22,
+      19,
+      0,
+      20,
+      0,
+      "LIST"
+    ],
+    [
+      23,
+      20,
+      2,
+      21,
+      0,
+      "STRING"
+    ],
+    [
+      25,
+      20,
+      0,
+      26,
+      0,
+      "LIST"
+    ],
+    [
+      26,
+      26,
+      0,
+      27,
+      0,
+      "STRING"
+    ],
+    [
+      31,
+      10,
+      0,
+      31,
+      0,
+      "VLM_CONTEXT"
+    ],
+    [
+      32,
+      14,
+      0,
+      31,
+      1,
+      "IMAGE"
+    ],
+    [
+      33,
+      11,
+      0,
+      31,
+      4,
+      "STRING"
+    ],
+    [
+      34,
+      31,
+      0,
+      16,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Keyframe Loading",
+      "bounding": [
+        30,
+        -20,
+        250,
+        1280
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Frame Pair VLM Processing Loop",
+      "bounding": [
+        930,
+        270,
+        1600,
+        550
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Prompt Collection & Formatting",
+      "bounding": [
+        2130,
+        830,
+        750,
+        400
+      ],
+      "color": "#8A8",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.9362848755672276,
+      "offset": [
+        285.35380599622505,
+        187.6578633676748
+      ]
+    },
+    "frontendVersion": "1.23.4",
+    "VHS_latentpreview": true,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

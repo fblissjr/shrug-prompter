@@ -1,0 +1,354 @@
+{
+  "id": "c21eada3-b4ff-4b5c-a1f6-8f5845cd00cd",
+  "revision": 0,
+  "last_node_id": 12,
+  "last_link_id": 14,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        100,
+        100
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "VLMProviderConfig",
+      "pos": [
+        100,
+        450
+      ],
+      "size": [
+        350,
+        170
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "slot_index": 0,
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMProviderConfig",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "not-required",
+        "qwen2.5-vl"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "VLMImagePassthrough",
+      "pos": [
+        450,
+        100
+      ],
+      "size": [
+        315,
+        82
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "original",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "count",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMImagePassthrough",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "Note",
+      "pos": [
+        100,
+        650
+      ],
+      "size": [
+        400,
+        100
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Updates:\n- Uses VLMImagePassthrough for zero-copy\n- Connects to first_response output (not context)\n- response_cleanup='standard' for clean text\n- Shows all ShrugPrompter outputs"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 11,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        1166.65869140625,
+        260.4543151855469
+      ],
+      "size": [
+        260.97967529296875,
+        161.8883514404297
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 14
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2507112302",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Any (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 12,
+      "type": "ShrugPrompter",
+      "pos": [
+        500,
+        250
+      ],
+      "size": [
+        400,
+        754
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "link": 12
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "name": "sampler_config",
+          "shape": 7,
+          "type": "SAMPLER_CONFIG",
+          "link": null
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "response_texts",
+          "type": "LIST",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "first_response",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "response_count",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "is_batch_mode",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "ShrugPrompter"
+      },
+      "widgets_values": [
+        "",
+        "What do you see in this image? Be specific about colors, objects, and composition.",
+        512,
+        1,
+        0.95,
+        "{}",
+        "{}",
+        true,
+        false,
+        false,
+        "sequential",
+        300,
+        "{}",
+        "max",
+        512,
+        512,
+        512,
+        85,
+        false,
+        "none"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      2,
+      0,
+      12,
+      0,
+      "VLM_CONTEXT"
+    ],
+    [
+      13,
+      3,
+      0,
+      12,
+      1,
+      "IMAGE"
+    ],
+    [
+      14,
+      12,
+      1,
+      11,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 1.3505905511811023,
+      "offset": [
+        121.66666666666674,
+        143.8132925229559
+      ]
+    },
+    "frontendVersion": "1.23.4",
+    "VHS_latentpreview": true,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

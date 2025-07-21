@@ -1,0 +1,803 @@
+{
+  "id": "4ec28089-ae4a-4fd6-a206-b43bbc9852cc",
+  "revision": 0,
+  "last_node_id": 23,
+  "last_link_id": 28,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        50
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "frame1.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        400
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "frame2.png",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        750
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "frame3.png",
+        "image"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "ImageBatch",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        200,
+        100
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 5,
+      "type": "ImageBatch",
+      "pos": [
+        400,
+        450
+      ],
+      "size": [
+        200,
+        100
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ImageBatch",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "VLMProviderConfig",
+      "pos": [
+        50,
+        1100
+      ],
+      "size": [
+        350,
+        170
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "slot_index": 0,
+          "links": [
+            23
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMProviderConfig",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "not-required",
+        "qwen2.5-vl"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "VLMImagePassthrough",
+      "pos": [
+        650,
+        300
+      ],
+      "size": [
+        315,
+        82
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            24
+          ]
+        },
+        {
+          "name": "original",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "count",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMImagePassthrough",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "VLMResultCollector",
+      "pos": [
+        1250,
+        600
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "results",
+          "type": "VLM_RESULTS",
+          "link": null
+        },
+        {
+          "name": "context",
+          "type": "*",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collection",
+          "type": "VLM_COLLECTION",
+          "slot_index": 0,
+          "links": null
+        },
+        {
+          "name": "count",
+          "type": "INT",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "text_list",
+          "type": "LIST",
+          "slot_index": 2,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "VLMResultCollector",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "default",
+        false
+      ]
+    },
+    {
+      "id": 14,
+      "type": "Note",
+      "pos": [
+        50,
+        1300
+      ],
+      "size": [
+        700,
+        150
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Batch VLM Processing Updates:\n- Uses VLMImagePassthrough for zero-copy operation\n- batch_mode=true for efficient multi-image processing (3 separate API calls)\n- response_cleanup='standard' for WAN/VACE compatibility\n- VLMResultCollector instead of accumulator (no persistence issues)\n- TextListCleanup node to show cleaned responses joined with | separator\n- Each image gets its own VLM call, results collected in order"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 21,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        1858.251708984375,
+        315.2156982421875
+      ],
+      "size": [
+        171.38925170898438,
+        76
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 21
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2507112302",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Any (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 12,
+      "type": "TextListCleanup",
+      "pos": [
+        1250,
+        100
+      ],
+      "size": [
+        300,
+        220
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_list",
+          "type": "LIST",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cleaned_list",
+          "type": "LIST",
+          "slot_index": 0,
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "original_list",
+          "type": "LIST",
+          "slot_index": 1,
+          "links": null
+        },
+        {
+          "name": "cleaned_joined",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": [
+            21
+          ]
+        },
+        {
+          "name": "operations_applied",
+          "type": "STRING",
+          "slot_index": 3,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "TextListCleanup",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "trim,unicode,newlines,collapse",
+        "|",
+        "",
+        0
+      ]
+    },
+    {
+      "id": 22,
+      "type": "Display Int (rgthree)",
+      "pos": [
+        2005.2623291015625,
+        832.0499877929688
+      ],
+      "size": [
+        162.83065795898438,
+        76
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "input",
+          "type": "INT",
+          "link": 28
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2507112302",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Int (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 23,
+      "type": "ShrugPrompter",
+      "pos": [
+        800,
+        600
+      ],
+      "size": [
+        400,
+        754
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "link": 23
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 24
+        },
+        {
+          "name": "sampler_config",
+          "shape": 7,
+          "type": "SAMPLER_CONFIG",
+          "link": null
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "system_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "system_prompt"
+          },
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            26
+          ]
+        },
+        {
+          "name": "response_texts",
+          "type": "LIST",
+          "links": [
+            27
+          ]
+        },
+        {
+          "name": "first_response",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "response_count",
+          "type": "INT",
+          "links": [
+            28
+          ]
+        },
+        {
+          "name": "is_batch_mode",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "ShrugPrompter"
+      },
+      "widgets_values": [
+        "",
+        "",
+        512,
+        1,
+        0.95,
+        "{}",
+        "{}",
+        true,
+        false,
+        false,
+        "sequential",
+        300,
+        "{}",
+        "max",
+        512,
+        512,
+        512,
+        85,
+        false,
+        "none"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "PromptTemplateLoader",
+      "pos": [
+        450,
+        1100
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "prompt_text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            25
+          ]
+        },
+        {
+          "name": "metadata",
+          "type": "STRING",
+          "slot_index": 1,
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "c1baf22e6ffe608b539c59c4d227e28478c1edce",
+        "Node name for S&R": "PromptTemplateLoader",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "wan_prompt_rewriter-instruct.md"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      4,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      5,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      13,
+      12,
+      0,
+      null,
+      0,
+      "LIST"
+    ],
+    [
+      21,
+      12,
+      2,
+      21,
+      0,
+      "*"
+    ],
+    [
+      23,
+      6,
+      0,
+      23,
+      0,
+      "VLM_CONTEXT"
+    ],
+    [
+      24,
+      8,
+      0,
+      23,
+      1,
+      "IMAGE"
+    ],
+    [
+      25,
+      7,
+      0,
+      23,
+      4,
+      "STRING"
+    ],
+    [
+      26,
+      23,
+      0,
+      10,
+      1,
+      "*"
+    ],
+    [
+      27,
+      23,
+      1,
+      12,
+      0,
+      "LIST"
+    ],
+    [
+      28,
+      23,
+      3,
+      22,
+      0,
+      "INT"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.8706852791878172,
+      "offset": [
+        288.33333333333326,
+        324.5102754700481
+      ]
+    },
+    "frontendVersion": "1.23.4",
+    "VHS_latentpreview": true,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

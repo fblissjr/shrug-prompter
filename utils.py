@@ -126,7 +126,7 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
             pil_image = Image.fromarray(image_np, mode=mode)
 
             # Resize if too large to reduce memory usage
-            if max(pil_image.size) > max_size:
+            if max_size is not None and max(pil_image.size) > max_size:
                 # Calculate new size maintaining aspect ratio
                 ratio = max_size / max(pil_image.size)
                 new_size = tuple(int(dim * ratio) for dim in pil_image.size)
@@ -163,6 +163,99 @@ def tensors_to_base64_list(tensor_batch, max_size=1024, quality=85):
 
 # Removed run_async - ComfyUI nodes should be synchronous
 # The send_request function in shrug_router.py is now synchronous
+
+def tensors_to_raw_bytes_list(tensor_batch, quality=85, preserve_alpha=False):
+    """
+    Converts a ComfyUI IMAGE tensor batch to a list of raw image bytes.
+    Used for multipart requests to avoid base64 encoding overhead.
+    
+    Args:
+        tensor_batch: The tensor batch to convert
+        quality: JPEG quality for compression
+        preserve_alpha: If True, saves as PNG to preserve alpha channel
+    
+    Returns:
+        List of tuples: (image_bytes, mime_type)
+    """
+    if tensor_batch is None:
+        return []
+    
+    bytes_list = []
+    try:
+        for i in range(tensor_batch.shape[0]):
+            tensor = tensor_batch[i]
+            
+            # Move to CPU and convert to numpy
+            image_np = tensor.cpu().numpy()
+            
+            # Clear GPU memory if needed
+            if tensor.device.type == 'cuda':
+                del tensor
+                torch.cuda.empty_cache()
+            
+            # Handle tensor format (ComfyUI uses HWC)
+            if image_np.ndim == 3:
+                if image_np.shape[0] in [1, 3, 4] and image_np.shape[0] < min(image_np.shape[1:]):
+                    image_np = np.transpose(image_np, (1, 2, 0))
+            
+            # Ensure values are in 0-255 range
+            if image_np.max() <= 1.0:
+                image_np = (image_np * 255).astype(np.uint8)
+            else:
+                image_np = np.clip(image_np, 0, 255).astype(np.uint8)
+            
+            # Remove extra dimensions
+            image_np = image_np.squeeze()
+            
+            # Determine PIL mode
+            if image_np.ndim == 2:
+                mode = 'L'  # Grayscale
+            elif image_np.ndim == 3:
+                if image_np.shape[2] == 1:
+                    image_np = image_np.squeeze(axis=2)
+                    mode = 'L'
+                elif image_np.shape[2] == 3:
+                    mode = 'RGB'
+                elif image_np.shape[2] == 4:
+                    mode = 'RGBA'
+                else:
+                    image_np = image_np[:, :, :3]
+                    mode = 'RGB'
+            else:
+                raise ValueError(f"Unsupported image shape: {image_np.shape}")
+            
+            # Create PIL image
+            pil_image = Image.fromarray(image_np, mode=mode)
+            
+            # Convert to bytes
+            buffer = io.BytesIO()
+            
+            # Choose format based on mode and preserve_alpha
+            if preserve_alpha and mode == 'RGBA':
+                pil_image.save(buffer, format="PNG", optimize=True)
+                mime_type = "image/png"
+            elif mode in ['RGB', 'L']:
+                pil_image.save(buffer, format="JPEG", quality=quality, optimize=True)
+                mime_type = "image/jpeg"
+            else:
+                pil_image.save(buffer, format="PNG", optimize=True)
+                mime_type = "image/png"
+            
+            img_bytes = buffer.getvalue()
+            buffer.close()
+            
+            bytes_list.append((img_bytes, mime_type))
+            
+            # Clean up
+            del pil_image, image_np
+    
+    except Exception as e:
+        print(f"ERROR: Failed to convert tensor to bytes: {e}")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        return []
+    
+    return bytes_list
 
 def cleanup_gpu_memory():
     """Helper function to clean up GPU memory."""
