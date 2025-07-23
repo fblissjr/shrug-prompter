@@ -50,6 +50,9 @@ from .nodes.loop_compatible_nodes import (
 # Text Cleanup
 from .nodes.text_cleanup import TextCleanupNode, TextListCleanupNode
 
+# Memory Management
+from .nodes.memory_cleanup import GlobalMemoryCleanup
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -94,6 +97,7 @@ NODE_CLASS_MAPPINGS = {
     "VideoSegmentAssembler": VideoSegmentAssembler,
     "SmartImageRangeExtractor": SmartImageRangeExtractor,
     "AutoMemoryManager": AutoMemoryManager,
+    "GlobalMemoryCleanup": GlobalMemoryCleanup,
 
     # Utility Nodes
     "PromptTemplateLoader": PromptTemplateLoader,
@@ -136,6 +140,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "VideoSegmentAssembler": "Video Segment Assembler",
     "SmartImageRangeExtractor": "Smart Image Range Extractor",
     "AutoMemoryManager": "Auto Memory Manager",
+    "GlobalMemoryCleanup": "Global Memory Cleanup",
 
     # Utility Nodes
     "PromptTemplateLoader": "Prompt Template Loader",

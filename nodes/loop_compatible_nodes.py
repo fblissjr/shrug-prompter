@@ -30,6 +30,7 @@ class LoopAwareVLMAccumulator:
             "optional": {
                 "reset": ("BOOLEAN", {"default": False}),
                 "extract_mode": (["all", "responses_only", "first_response"], {"default": "responses_only"}),
+                "clear_all": ("BOOLEAN", {"default": False, "tooltip": "Clear ALL accumulators across all IDs"}),
             }
         }
 
@@ -39,8 +40,20 @@ class LoopAwareVLMAccumulator:
     FUNCTION = "accumulate_vlm"
     CATEGORY = "VLM/Loop"
 
-    def accumulate_vlm(self, context, accumulator_id="default", reset=False, extract_mode="responses_only"):
+    @classmethod
+    def clear_all_accumulators(cls):
+        """Clear all accumulated data across all IDs"""
+        count = len(cls._accumulators)
+        cls._accumulators.clear()
+        return count
+    
+    def accumulate_vlm(self, context, accumulator_id="default", reset=False, extract_mode="responses_only", clear_all=False):
         """Accumulate VLM responses, handling both single and batch modes."""
+        
+        # Clear all accumulators if requested
+        if clear_all:
+            count = self.clear_all_accumulators()
+            print(f"[LoopAwareVLMAccumulator] Cleared {count} accumulators")
 
         # Initialize or reset accumulator
         if reset or accumulator_id not in self._accumulators:
@@ -154,14 +167,19 @@ class LoopAwareVLMAccumulator:
         if len(acc["contexts"]) % 10 == 0:
             memory_tracker.cleanup()
             
-        # Clean up old accumulators if too many exist
-        if len(self._accumulators) > 10:
-            # Keep only the 5 most recently used
+        # More aggressive cleanup - limit to 3 accumulators
+        if len(self._accumulators) > 3:
+            # Keep only the 2 most recently used
             sorted_ids = sorted(self._accumulators.keys(), 
                               key=lambda k: len(self._accumulators[k]["contexts"]), 
                               reverse=True)
-            for old_id in sorted_ids[5:]:
-                del self._accumulators[old_id]
+            removed_count = 0
+            for old_id in sorted_ids[2:]:
+                if old_id != accumulator_id:  # Don't remove current one
+                    del self._accumulators[old_id]
+                    removed_count += 1
+            if removed_count > 0:
+                print(f"[LoopAwareVLMAccumulator] Cleaned up {removed_count} old accumulators")
 
         return (output_acc, acc["responses"], len(acc["responses"]), debug_info)
 

@@ -46,7 +46,7 @@ class ShrugPrompter:
                 "mask": ("MASK",),
                 "metadata": ("STRING", {"default": "{}"}),
                 "template_vars": ("STRING", {"multiline": True, "default": "{}"}),
-                "use_cache": ("BOOLEAN", {"default": True}),
+                "use_cache": ("BOOLEAN", {"default": False}),
                 "debug_mode": ("BOOLEAN", {"default": False}),
                 "batch_mode": ("BOOLEAN", {"default": False, "tooltip": "Process each image separately"}),
                 "processing_mode": (["sequential", "sequential_with_context"], {"default": "sequential"}),
@@ -59,6 +59,8 @@ class ShrugPrompter:
                 "image_quality": ("INT", {"default": 85, "min": 1, "max": 100, "tooltip": "JPEG quality (1-100)"}),
                 "preserve_alpha": ("BOOLEAN", {"default": False, "tooltip": "Keep transparency, output PNG"}),
                 "response_cleanup": (["none", "basic", "standard", "strict"], {"default": "none", "tooltip": "none=no cleanup, basic=trim only, standard=trim+unicode+newlines, strict=ASCII only"}),
+                "clear_cache": ("BOOLEAN", {"default": False, "tooltip": "Clear the cache before processing"}),
+                "max_cache_size": ("INT", {"default": 10, "min": 0, "max": 100, "step": 5, "tooltip": "Maximum cache size (0 to disable cache completely)"}),
             },
         }
 
@@ -70,18 +72,33 @@ class ShrugPrompter:
 
     def __init__(self):
         self._cache = {}
-        self._cache_max_size = 50
+        self._cache_max_size = 10  # Reduced default cache size
         self._text_cleaner = None  # Reuse cleaner instance
+        self._cache_hits = 0
+        self._cache_misses = 0
 
     def execute_prompt(self, context, system_prompt, user_prompt, max_tokens, temperature, top_p, 
                           images=None, sampler_config=None, mask=None, metadata="{}", template_vars="{}", use_cache=True, debug_mode=False,
                           batch_mode=False, processing_mode="sequential", timeout=300, extra_api_params="{}", 
                           resize_mode="max", resize_value=512, resize_width=512, resize_height=512, 
-                          image_quality=85, preserve_alpha=False, response_cleanup="none"):
+                          image_quality=85, preserve_alpha=False, response_cleanup="none", clear_cache=False, max_cache_size=10):
 
         debug_info = []
         context["vlm_metadata"] = metadata
         context["debug_info"] = debug_info
+        
+        # Cache management
+        if clear_cache:
+            self._cache.clear()
+            self._cache_hits = 0
+            self._cache_misses = 0
+            print("[ShrugPrompter] Cache cleared")
+        
+        # Update max cache size
+        self._cache_max_size = max_cache_size
+        if max_cache_size == 0:
+            use_cache = False  # Disable cache if max size is 0
+            self._cache.clear()
 
         # Log initial state
         num_images = len(images) if images is not None and hasattr(images, '__len__') else 0
@@ -92,7 +109,9 @@ class ShrugPrompter:
         print(f"[ShrugPrompter] Images: {num_images}")
         print(f"[ShrugPrompter] Batch mode: {batch_mode}")
         print(f"[ShrugPrompter] Processing mode: {processing_mode}")
-        print(f"[ShrugPrompter] Cache enabled: {use_cache}")
+        print(f"[ShrugPrompter] Cache enabled: {use_cache} (size: {len(self._cache)}/{self._cache_max_size})")
+        if use_cache and len(self._cache) > 0:
+            print(f"[ShrugPrompter] Cache stats - hits: {self._cache_hits}, misses: {self._cache_misses}")
         print(f"[ShrugPrompter] Max tokens: {max_tokens}")
         
         if debug_mode:
@@ -139,7 +158,9 @@ class ShrugPrompter:
             
             cache_key = self._create_cache_key(provider_config, processed_system, processed_user, max_tokens, temperature, top_p, top_k, repetition_penalty, images, mask)
             if use_cache and cache_key in self._cache:
+                self._cache_hits += 1
                 context["llm_response"] = self._cache[cache_key]
+                print(f"[ShrugPrompter] Cache HIT! Using cached response")
                 # Need to extract responses from cached data
                 response_list = []
                 cached_response = self._cache[cache_key]
@@ -155,6 +176,9 @@ class ShrugPrompter:
                 debug_output = "Response from cache" if debug_mode else "No debug info"
                 
                 return (context, response_list, first_response, response_count, is_batch, debug_output, images)
+            
+            # Cache miss
+            self._cache_misses += 1
 
             # Check if we should use multipart
             use_multipart = False
@@ -364,8 +388,17 @@ class ShrugPrompter:
         return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
     def _cleanup_cache(self):
+        """More efficient cache cleanup with LRU behavior"""
+        if self._cache_max_size == 0:
+            self._cache.clear()
+            return
+            
         if len(self._cache) > self._cache_max_size:
-            for key in list(self._cache.keys())[:len(self._cache) - self._cache_max_size]: del self._cache[key]
+            # Remove oldest entries (FIFO order)
+            num_to_remove = len(self._cache) - self._cache_max_size
+            for key in list(self._cache.keys())[:num_to_remove]:
+                del self._cache[key]
+            print(f"[ShrugPrompter] Cache cleanup: removed {num_to_remove} old entries")
 
     def _process_images(self, images, resize_mode="max", resize_value=512, resize_width=512, resize_height=512, image_quality=85, preserve_alpha=False):
         """Process images with proper resize parameters for server-side resizing"""

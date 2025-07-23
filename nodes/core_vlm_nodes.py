@@ -376,7 +376,10 @@ class VLMResultCollector:
     """
     
     def __init__(self):
+        # Use instance storage but clear on init to prevent persistence
         self._collectors = {}
+        # Track last execution to detect new runs
+        self._last_execution_id = None
     
     @classmethod
     def INPUT_TYPES(cls):
@@ -387,6 +390,8 @@ class VLMResultCollector:
             },
             "optional": {
                 "reset": ("BOOLEAN", {"default": False}),
+                "clear_all": ("BOOLEAN", {"default": False, "tooltip": "Clear ALL collectors"}),
+                "max_collectors": ("INT", {"default": 2, "min": 1, "max": 10}),
             }
         }
     
@@ -395,8 +400,14 @@ class VLMResultCollector:
     FUNCTION = "collect_results"
     CATEGORY = "VLM/Results"
     
-    def collect_results(self, results, collector_id="default", reset=False):
+    def collect_results(self, results, collector_id="default", reset=False, clear_all=False, max_collectors=2):
         """Collect results without duplicating data"""
+        
+        # Clear all collectors if requested
+        if clear_all:
+            count = len(self._collectors)
+            self._collectors.clear()
+            print(f"[VLMResultCollector] Cleared {count} collectors")
         # Get or create collector
         if reset or collector_id not in self._collectors:
             collector = {
@@ -418,12 +429,17 @@ class VLMResultCollector:
         count = len(collector["responses"])
         text_list = collector["responses"]  # Just a reference
         
-        # Clean up old collectors
-        if len(self._collectors) > 5:
-            # Keep only the 5 most recent
+        # More aggressive cleanup
+        if len(self._collectors) > max_collectors:
+            # Keep only the most recent collectors
             keys = list(self._collectors.keys())
-            for key in keys[:-5]:
-                del self._collectors[key]
+            removed_count = 0
+            for key in keys[:-max_collectors]:
+                if key != collector_id:  # Don't remove current one
+                    del self._collectors[key]
+                    removed_count += 1
+            if removed_count > 0:
+                print(f"[VLMResultCollector] Cleaned up {removed_count} old collectors")
         
         return (collector, count, text_list)
 
