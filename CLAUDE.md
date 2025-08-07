@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code when working with the shrug-prompter ComfyUI custom nodes.
 
-## Code Style Guidelines
+## Code and Writing Style Guidelines
 
 - **No emojis** in code, display names, or documentation
 - Keep all naming and display text professional
@@ -210,6 +210,21 @@ Keyframes → Extract Pairs → VLM Analysis → Prompted Video Gen → Reassemb
 - **GlobalMemoryCleanup** - Comprehensive memory cleanup
   - Modes: light (caches), normal (+accumulators), aggressive (+gc), nuclear (+cuda)
   - Place before heavy operations or between workflow runs
+
+### Creative & Encoding (2) - NEW!
+- **RemoteTextEncoder** - Use heylookitsanllm as a text encoder
+  - Multiple modes: embeddings, conditioning, semantic, clip_style
+  - Configurable dimensions (128-4096)
+  - Batch processing support
+  - Compatible with diffusion model conditioning
+  - See docs/CREATIVE_FEATURES.md for details
+- **SeedPromptGenerator** - Creative prompt seed generation
+  - 5 categories: cinematic, artistic, narrative, conceptual, experimental
+  - 4 variation modes: random, systematic, evolutionary, thematic
+  - Custom templates and variables
+  - AI enhancement option
+  - Term filtering (avoid/prefer)
+  - See docs/CREATIVE_FEATURES.md for examples
 
 ## Troubleshooting
 
@@ -472,7 +487,7 @@ Use multiple MakeListNodes or create custom accumulator node
 
 ### Keep Intact
 - ForLoop structure (nodes 635, 636)
-- AccumulationGetItemNode (node 719) 
+- AccumulationGetItemNode (node 719)
 - WanVideoTextEncode (node 168)
 - All video generation nodes
 
@@ -518,8 +533,8 @@ schedule: "uniform_standard"
 
 ## Example User Prompt for VLM
 ```
-Analyze this keyframe image and create a detailed, cinematic prompt 
-for WAN VACE video generation. This prompt will be used to generate 
+Analyze this keyframe image and create a detailed, cinematic prompt
+for WAN VACE video generation. This prompt will be used to generate
 a video transition FROM this keyframe TO the next one. Focus on:
 
 - What action or movement could naturally occur starting from this frame

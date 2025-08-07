@@ -53,6 +53,10 @@ from .nodes.text_cleanup import TextCleanupNode, TextListCleanupNode
 # Memory Management
 from .nodes.memory_cleanup import GlobalMemoryCleanup
 
+# New Creative and Encoding nodes
+from .nodes.remote_text_encoder import RemoteTextEncoder
+from .nodes.seed_prompt_generator import SeedPromptGenerator
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -124,6 +128,10 @@ NODE_CLASS_MAPPINGS = {
 
     # Advanced nodes
     "AdvancedVLMSampler": AdvancedVLMSampler,
+    
+    # Creative and Encoding nodes
+    "RemoteTextEncoder": RemoteTextEncoder,
+    "SeedPromptGenerator": SeedPromptGenerator,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -167,6 +175,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     # Advanced nodes
     "AdvancedVLMSampler": "Advanced VLM Sampler",
+    
+    # Creative and Encoding nodes
+    "RemoteTextEncoder": "Remote Text Encoder",
+    "SeedPromptGenerator": "Seed Prompt Generator",
 }
 
 print(f"[Shrug-Prompter] Loaded {len(NODE_CLASS_MAPPINGS)} nodes")
