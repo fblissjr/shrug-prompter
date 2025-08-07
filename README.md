@@ -237,6 +237,7 @@ EndFrame   ↗
 - ComfyUI
 - LLM / VLM server (`heylookitsanllm` recommended since it's what I'm driving everything from)
   - llama.cpp & mlx + mlx-vlm unified
+  - **Note**: RemoteTextEncoder requires heylookitsanllm to have `/v1/embeddings` endpoint implemented
 - Vision-capable model (qwen2-vl, gemma3n, mistral small, etc)
 
 Whew, that's a lot. Hope this is helpful for some people, despite it likely being very niche.

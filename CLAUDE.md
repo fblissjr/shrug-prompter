@@ -211,13 +211,15 @@ Keyframes → Extract Pairs → VLM Analysis → Prompted Video Gen → Reassemb
   - Modes: light (caches), normal (+accumulators), aggressive (+gc), nuclear (+cuda)
   - Place before heavy operations or between workflow runs
 
-### Creative & Encoding (2) - NEW!
-- **RemoteTextEncoder** - Use heylookitsanllm as a text encoder
-  - Multiple modes: embeddings, conditioning, semantic, clip_style
-  - Configurable dimensions (128-4096)
+### Creative & Encoding (2) - UPDATED!
+- **RemoteTextEncoder** - Get real embeddings from heylookitsanllm
+  - **IMPORTANT**: Requires heylookitsanllm to implement `/v1/embeddings` endpoint
+  - Returns actual model embeddings (not hallucinated numbers)
+  - Configurable dimensions (truncation support)
   - Batch processing support
   - Compatible with diffusion model conditioning
-  - See docs/CREATIVE_FEATURES.md for details
+  - See docs/heylookllm_embeddings_spec.md for server implementation requirements
+  - See docs/CREATIVE_FEATURES.md for usage details
 - **SeedPromptGenerator** - Creative prompt seed generation
   - 5 categories: cinematic, artistic, narrative, conceptual, experimental
   - 4 variation modes: random, systematic, evolutionary, thematic
@@ -261,6 +263,7 @@ Shrug-prompter nodes communicate with heylookllm server:
 - **NEW**: Auto-detects server capabilities for optimal performance
 - **NEW**: Uses multipart endpoint when available (57ms faster, 33% less bandwidth)
 - **NEW**: Advanced server-side image resizing with multiple modes and quality options
+- **IMPORTANT**: RemoteTextEncoder requires `/v1/embeddings` endpoint (see docs/heylookllm_embeddings_spec.md)
 
 ## File Structure
 ```

@@ -1,0 +1,639 @@
+{
+  "id": "a82413b6-22c8-4d90-bfbb-acb67b7e19f1",
+  "revision": 0,
+  "last_node_id": 17,
+  "last_link_id": 19,
+  "nodes": [
+    {
+      "id": 15,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        1111.7044677734375,
+        1330.5679931640625
+      ],
+      "size": [
+        210,
+        88
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 17
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2508012353",
+        "Node name for S&R": "Display Any (rgthree)",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "In a sleek, neon-lit city of the future, where towering skyscrapers stretch towards an indigo sky dotted with floating holograms, a peculiar and mesmerizing phenomenon unfolds. The streets buzz with hovercars gliding silently above the bustling crowds, their lights casting a myriad of colors that dance upon the reflective surfaces. Yet, amidst this advanced metropolis, an otherworldly anomaly captures everyone's attention: gravity reverses, but only within the confines of mirrors. Imagine stepping into this vibrant urban landscape, where every building is adorned with giant reflective panels. These mirrors are not mere decorations but portals into a gravity-defying world. As you approach one of these panels, you witness the most extraordinary sight: objects and figures within the mirror begin to drift upwards as if anchored by an invisible force that defies the very laws of physics. A fallen leaf gently lifts, spiraling into the mirrored sky; a forgotten coin rises like a bubble in water. People are drawn to these mirrors, their faces reflecting awe and curiosity. Children launch small toys into the mirrored space, watching in delight as they float and tumble in slow motion. Adults pause to marvel at the sight, some even reaching out as if trying to grasp the reversed reality. The mirrors become gathering points, places where conversations intertwine with the spectacle of gravity's inversion. As the day progresses, the intensity of this phenomenon begins to increase. The reversal becomes more pronounced, and the boundaries between the real world and the mirrored one blur in mesmerizing ways. The air grows thick with anticipation, and the city's usual hum transforms into a collective gasp of wonder. In one particular large mirror, a cascading fountain seems to defy gravity, its water flowing upwards in a beautiful, shimmering arc. Passersby stop to watch, mesmerized by the liquid's upward journey. The atmosphere becomes charged with an ethereal energy. The lights from the buildings and hovercars reflect in the mirrors, creating a dazzling array of colors that seem to float and shimmer as if caught in a perpetual dance. The city's architecture appears to bend and stretch, its reflection in the mirrors giving it a dreamlike quality. The increased intensity of the phenomenon turns this futuristic city into a living work of art, where reality and illusion merge seamlessly. As night falls, the city is illuminated by a surreal glow. The sky becomes a canvas for a light show, with the mirrors reflecting the city's lights in ever-changing patterns. The reversed gravity within the mirrors intensifies, pulling objects and light in ways that create a"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "ShrugPrompter",
+      "pos": [
+        125.34083557128906,
+        478.74993896484375
+      ],
+      "size": [
+        431.25,
+        907
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "link": 1
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "sampler_config",
+          "shape": 7,
+          "type": "SAMPLER_CONFIG",
+          "link": null
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "response_texts",
+          "type": "LIST",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "first_response",
+          "type": "STRING",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "response_count",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "is_batch_mode",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "6a40ab13d4a6390e4977ce6947795a237ed4476e",
+        "Node name for S&R": "Prompt Expander",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "You are a creative prompt expansion system. Take the provided seed prompt and expand it into a detailed, atmospheric description suitable for video generation.",
+        "Expand this seed prompt into a rich, detailed description:\n\nA futuristic scene where gravity reverses but only in mirrors. Later, increased intensity",
+        512,
+        0.8,
+        0.9,
+        "{}",
+        "{}",
+        false,
+        false,
+        false,
+        "sequential",
+        300,
+        "{}",
+        "none",
+        512,
+        512,
+        512,
+        85,
+        false,
+        "standard",
+        false,
+        10
+      ]
+    },
+    {
+      "id": 11,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        157.2725830078125,
+        222.38589477539062
+      ],
+      "size": [
+        312.5,
+        188
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 13
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2508012353",
+        "Node name for S&R": "Display Any (rgthree)",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Generated 1 seed prompts\nCategory: cinematic\nVariation mode: evolutionary\nComplexity: complex\nSeed: 42"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        653.52294921875,
+        603.5223388671875
+      ],
+      "size": [
+        379.31817626953125,
+        241.40908813476562
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 14
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2508012353",
+        "Node name for S&R": "Display Any (rgthree)",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Close-up of a lone figure, lost expression, cold color grading, featuring intricate patterns"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "TextListToString",
+      "pos": [
+        1208.5224609375,
+        834.885986328125
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_list",
+          "type": "LIST",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "6a40ab13d4a6390e4977ce6947795a237ed4476e",
+        "Node name for S&R": "List to String",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "\n\n"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        625.0003662109375,
+        1013.6364135742188
+      ],
+      "size": [
+        323.6619873046875,
+        316.9091491699219
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 18
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2508012353",
+        "Node name for S&R": "Display Any (rgthree)",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "RemoteTextEncoder",
+      "pos": [
+        571.13623046875,
+        108.97734832763672
+      ],
+      "size": [
+        400,
+        366
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "link": 7
+        },
+        {
+          "name": "batch_texts",
+          "shape": 7,
+          "type": "LIST",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null
+        },
+        {
+          "name": "embedding_tensor",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "dimension",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "debug_info",
+          "type": "STRING",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "6a40ab13d4a6390e4977ce6947795a237ed4476e",
+        "Node name for S&R": "Remote Text Encoder",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Cinematic video prompt",
+        "embeddings",
+        768,
+        true,
+        "mean"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "SeedPromptGenerator",
+      "pos": [
+        -323.5228271484375,
+        130.90908813476562
+      ],
+      "size": [
+        400,
+        546
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "VLM_CONTEXT",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "seed_prompts",
+          "type": "LIST",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "first_prompt",
+          "type": "STRING",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "all_prompts_text",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "prompt_count",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "generation_info",
+          "type": "STRING",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "6a40ab13d4a6390e4977ce6947795a237ed4476e",
+        "Node name for S&R": "Seed Prompt Generator",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "cinematic",
+        1,
+        "evolutionary",
+        "complex",
+        42,
+        "",
+        "",
+        "A futuristic scene where",
+        "",
+        "cyberpunk, neon, atmospheric",
+        true,
+        "Expand this cinematic seed into a detailed prompt for video generation:",
+        "Enhance this seed prompt with more detail and atmosphere while keeping the core concept:"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        1501.25,
+        93.75
+      ],
+      "size": [
+        171.38925170898438,
+        76
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "source",
+          "type": "*",
+          "link": 19
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2508012353",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Any (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 1,
+      "type": "VLMProviderConfig",
+      "pos": [
+        -104.7315444946289,
+        -273.9256896972656
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "VLM_CONTEXT",
+          "links": [
+            1,
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "fblissjr/shrug-prompter",
+        "ver": "6a40ab13d4a6390e4977ce6947795a237ed4476e",
+        "Node name for S&R": "VLM Provider Config",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "openai",
+        "http://localhost:8080",
+        "not-required-for-local",
+        "qwen2.5-vl-72b-gguf"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "VLM_CONTEXT"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      1,
+      "LIST"
+    ],
+    [
+      5,
+      3,
+      0,
+      null,
+      null,
+      "CONDITIONING"
+    ],
+    [
+      7,
+      1,
+      0,
+      3,
+      0,
+      "VLM_CONTEXT"
+    ],
+    [
+      8,
+      7,
+      1,
+      9,
+      0,
+      "LIST"
+    ],
+    [
+      13,
+      2,
+      4,
+      11,
+      0,
+      "*"
+    ],
+    [
+      14,
+      2,
+      1,
+      12,
+      0,
+      "*"
+    ],
+    [
+      17,
+      9,
+      0,
+      15,
+      0,
+      "*"
+    ],
+    [
+      18,
+      7,
+      2,
+      16,
+      0,
+      "*"
+    ],
+    [
+      19,
+      3,
+      4,
+      17,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Creative Seed Generation",
+      "bounding": [
+        -340.2274475097656,
+        -0.11363481730222702,
+        1295,
+        1507.04541015625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Remote Text Encoding",
+      "bounding": [
+        1000,
+        6.25,
+        900,
+        650
+      ],
+      "color": "#8A4B9B",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8800000000000001,
+      "offset": [
+        459.9999999999994,
+        381.24999999999955
+      ]
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "frontendVersion": "1.24.4",
+    "VHS_latentpreview": true,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

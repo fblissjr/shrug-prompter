@@ -4,6 +4,7 @@ import os
 import json
 import numpy as np
 import torch
+import requests
 from typing import Dict, List, Union, Optional, Tuple
 
 # Add parent directory to path for imports
@@ -11,19 +12,14 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-try:
-    from shrug_router import send_request
-except ImportError:
-    from ..shrug_router import send_request
-
 
 class RemoteTextEncoder:
     """
-    Remote text encoder that uses heylookitsanllm or other LLM servers
-    to encode text into embeddings or conditioning vectors.
+    Remote text encoder that uses heylookitsanllm's embeddings endpoint
+    to get real model embeddings for text.
     
-    This allows using powerful language models for text understanding
-    and encoding, similar to CLIP text encoders but via API.
+    This node sends text to the /v1/embeddings endpoint and receives
+    actual model embeddings back, not hallucinated numbers.
     """
     
     @classmethod
@@ -32,29 +28,15 @@ class RemoteTextEncoder:
             "required": {
                 "context": ("VLM_CONTEXT",),
                 "text": ("STRING", {"multiline": True}),
-                "encoding_mode": (["embeddings", "conditioning", "semantic", "clip_style"], {
-                    "default": "embeddings",
-                    "tooltip": "embeddings: raw embeddings, conditioning: ready for diffusion models, semantic: meaning-preserving, clip_style: CLIP-like encoding"
-                }),
-                "output_dimension": ("INT", {
-                    "default": 768,
-                    "min": 128,
-                    "max": 4096,
-                    "step": 128,
-                    "tooltip": "Target dimension for the encoding (model-dependent)"
-                }),
                 "normalize": ("BOOLEAN", {"default": True, "tooltip": "Normalize the output vectors"}),
-                "pooling_strategy": (["mean", "max", "cls", "last"], {
-                    "default": "mean",
-                    "tooltip": "How to pool token embeddings: mean, max, CLS token, or last token"
-                }),
             },
             "optional": {
                 "batch_texts": ("LIST", {"tooltip": "List of texts to encode in batch"}),
-                "encoding_instruction": ("STRING", {
-                    "multiline": True,
-                    "default": "",
-                    "tooltip": "Optional instruction to guide the encoding (e.g., 'Encode for image generation')"
+                "dimensions": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 4096,
+                    "tooltip": "Truncate embeddings to this dimension (0 = use full dimension)"
                 }),
                 "cache_embeddings": ("BOOLEAN", {"default": True}),
                 "debug_mode": ("BOOLEAN", {"default": False}),
@@ -70,11 +52,10 @@ class RemoteTextEncoder:
         self._cache = {}
         self._max_cache_size = 100
     
-    def encode_text(self, context, text, encoding_mode="embeddings", output_dimension=768, 
-                   normalize=True, pooling_strategy="mean", batch_texts=None, 
-                   encoding_instruction="", cache_embeddings=True, debug_mode=False):
+    def encode_text(self, context, text, normalize=True, batch_texts=None, 
+                   dimensions=0, cache_embeddings=True, debug_mode=False):
         """
-        Encode text using remote LLM server as a text encoder.
+        Get real embeddings from the heylookitsanllm embeddings endpoint.
         """
         debug_info = []
         
@@ -91,64 +72,89 @@ class RemoteTextEncoder:
             texts_to_encode = [text]
         
         if debug_mode:
-            debug_info.append(f"Encoding {len(texts_to_encode)} text(s) in {encoding_mode} mode")
+            debug_info.append(f"Encoding {len(texts_to_encode)} text(s)")
+            debug_info.append(f"Using model: {provider_config.get('llm_model', 'default')}")
         
         # Check cache
-        cache_key = self._generate_cache_key(texts_to_encode, encoding_mode, output_dimension, pooling_strategy)
+        cache_key = self._generate_cache_key(texts_to_encode, dimensions, normalize)
         if cache_embeddings and cache_key in self._cache:
             if debug_mode:
                 debug_info.append("Using cached embeddings")
             cached_result = self._cache[cache_key]
             return self._format_output(cached_result, debug_info, debug_mode)
         
-        # Build the encoding request
-        system_prompt = self._build_system_prompt(encoding_mode, encoding_instruction, output_dimension)
+        # Build embeddings API request
+        base_url = provider_config.get("base_url", "http://localhost:8080").rstrip("/")
+        embeddings_url = f"{base_url}/v1/embeddings"
         
-        # Format texts for the API
-        if len(texts_to_encode) == 1:
-            user_prompt = f"Encode the following text:\n\n{texts_to_encode[0]}"
-        else:
-            texts_formatted = "\n\n".join([f"[{i}] {txt}" for i, txt in enumerate(texts_to_encode)])
-            user_prompt = f"Encode the following {len(texts_to_encode)} texts:\n\n{texts_formatted}"
-        
-        # Prepare API request
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ]
-        
-        # Special parameters for encoding mode
-        extra_params = {
-            "response_format": {"type": "json_object"},  # Request JSON response
-            "seed": 42,  # For reproducible embeddings
+        # Format request
+        request_data = {
+            "input": texts_to_encode if len(texts_to_encode) > 1 else texts_to_encode[0],
+            "model": provider_config.get("llm_model", "default")
         }
         
-        if encoding_mode == "embeddings":
-            # Request raw embeddings if the model supports it
-            extra_params["return_embeddings"] = True
+        if dimensions > 0:
+            request_data["dimensions"] = dimensions
         
-        # Send request
+        # Add auth header if API key provided
+        headers = {"Content-Type": "application/json"}
+        if provider_config.get("api_key"):
+            headers["Authorization"] = f"Bearer {provider_config['api_key']}"
+        
+        if debug_mode:
+            debug_info.append(f"Sending request to: {embeddings_url}")
+            debug_info.append(f"Request: {json.dumps(request_data, indent=2)}")
+        
         try:
-            response = send_request(
-                provider=provider_config["provider"],
-                messages=messages,
-                api_key=provider_config["api_key"],
-                base_url=provider_config["base_url"],
-                llm_model=provider_config["llm_model"],
-                max_tokens=2048,  # Enough for embedding responses
-                temperature=0.0,  # Deterministic for encoding
-                top_p=1.0,
-                timeout=60,
-                **extra_params
+            # Send request to embeddings endpoint
+            response = requests.post(
+                embeddings_url,
+                headers=headers,
+                json=request_data,
+                timeout=30
             )
             
-            if "error" in response:
-                error_msg = response["error"].get("message", "Unknown error")
-                raise RuntimeError(f"API error: {error_msg}")
+            if debug_mode:
+                debug_info.append(f"Response status: {response.status_code}")
             
-            # Extract embeddings from response
-            embeddings = self._extract_embeddings(response, texts_to_encode, output_dimension, pooling_strategy, debug_mode)
+            if response.status_code != 200:
+                # Try to get error message
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("detail", str(error_data))
+                except:
+                    error_msg = response.text
+                
+                # Check if embeddings endpoint doesn't exist
+                if response.status_code == 404:
+                    error_msg = (
+                        "Embeddings endpoint not found. "
+                        "Please ensure heylookitsanllm has /v1/embeddings endpoint implemented. "
+                        "See docs/heylookllm_embeddings_spec.md for implementation details."
+                    )
+                
+                raise RuntimeError(f"Embeddings API error ({response.status_code}): {error_msg}")
             
+            # Parse response
+            response_data = response.json()
+            
+            if debug_mode:
+                debug_info.append(f"Response: {json.dumps(response_data, indent=2)[:500]}...")
+            
+            # Extract embeddings from OpenAI-compatible format
+            if "data" not in response_data:
+                raise ValueError("Invalid response format: missing 'data' field")
+            
+            embeddings_list = []
+            for item in response_data["data"]:
+                if "embedding" not in item:
+                    raise ValueError("Invalid response format: missing 'embedding' field")
+                embeddings_list.append(item["embedding"])
+            
+            # Convert to tensor
+            embeddings = torch.tensor(embeddings_list, dtype=torch.float32)
+            
+            # Normalize if requested
             if normalize:
                 embeddings = self._normalize_embeddings(embeddings)
             
@@ -158,10 +164,28 @@ class RemoteTextEncoder:
                 self._cleanup_cache()
             
             if debug_mode:
-                debug_info.append(f"Successfully encoded {len(texts_to_encode)} texts")
-                debug_info.append(f"Output shape: {embeddings.shape}")
+                debug_info.append(f"Successfully retrieved embeddings")
+                debug_info.append(f"Shape: {embeddings.shape}")
+                debug_info.append(f"Dimension: {embeddings.shape[1]}")
+                if normalize:
+                    debug_info.append("Embeddings normalized")
             
             return self._format_output(embeddings, debug_info, debug_mode)
+            
+        except requests.exceptions.ConnectionError:
+            error_msg = (
+                "Could not connect to embeddings endpoint. "
+                "Please ensure heylookitsanllm is running and has embeddings support."
+            )
+            if debug_mode:
+                debug_info.append(error_msg)
+            raise RuntimeError(error_msg)
+            
+        except requests.exceptions.Timeout:
+            error_msg = "Request to embeddings endpoint timed out"
+            if debug_mode:
+                debug_info.append(error_msg)
+            raise RuntimeError(error_msg)
             
         except Exception as e:
             error_msg = f"Encoding failed: {str(e)}"
@@ -169,123 +193,24 @@ class RemoteTextEncoder:
                 debug_info.append(error_msg)
                 import traceback
                 debug_info.append(traceback.format_exc())
-            
-            # Return zero embeddings on error
-            zero_embeddings = torch.zeros((len(texts_to_encode), output_dimension))
-            return self._format_output(zero_embeddings, debug_info, debug_mode)
-    
-    def _build_system_prompt(self, encoding_mode, instruction, dimension):
-        """Build system prompt based on encoding mode."""
-        base_prompt = "You are a text encoder that converts text into numerical representations."
-        
-        mode_prompts = {
-            "embeddings": f"""Generate dense embedding vectors of dimension {dimension} for the input text.
-Return a JSON object with an 'embeddings' field containing an array of {dimension} floating-point numbers.
-The embeddings should capture the semantic meaning of the text.""",
-            
-            "conditioning": f"""Generate conditioning vectors suitable for diffusion models.
-Return a JSON object with a 'conditioning' field containing an array of {dimension} numbers.
-Focus on visual and stylistic elements that would guide image generation.""",
-            
-            "semantic": f"""Generate semantic encoding vectors that preserve meaning across languages and paraphrases.
-Return a JSON object with a 'vectors' field containing an array of {dimension} numbers.
-Ensure similar meanings produce similar vectors.""",
-            
-            "clip_style": f"""Generate CLIP-style text embeddings for the input.
-Return a JSON object with a 'clip_embeddings' field containing an array of {dimension} numbers.
-Optimize for alignment with visual concepts and cross-modal similarity."""
-        }
-        
-        prompt = base_prompt + "\n\n" + mode_prompts.get(encoding_mode, mode_prompts["embeddings"])
-        
-        if instruction:
-            prompt += f"\n\nAdditional encoding guidance: {instruction}"
-        
-        return prompt
-    
-    def _extract_embeddings(self, response, texts, dimension, pooling, debug_mode):
-        """Extract embeddings from API response."""
-        if "choices" not in response or not response["choices"]:
-            raise ValueError("Invalid API response format")
-        
-        content = response["choices"][0]["message"]["content"]
-        
-        # Try to parse as JSON
-        try:
-            data = json.loads(content)
-        except json.JSONDecodeError:
-            # Fallback: try to extract numbers from text
-            import re
-            numbers = re.findall(r'-?\d+\.?\d*', content)
-            if len(numbers) >= dimension:
-                data = {"embeddings": [float(n) for n in numbers[:dimension]]}
-            else:
-                # Generate random embeddings as fallback
-                if debug_mode:
-                    print(f"Warning: Could not parse embeddings, using random initialization")
-                return torch.randn((len(texts), dimension))
-        
-        # Extract embedding array from various possible formats
-        embedding_data = None
-        for key in ["embeddings", "conditioning", "vectors", "clip_embeddings", "embedding", "vector"]:
-            if key in data:
-                embedding_data = data[key]
-                break
-        
-        if embedding_data is None:
-            # Try to find any array in the response
-            for value in data.values():
-                if isinstance(value, list) and len(value) > 0:
-                    embedding_data = value
-                    break
-        
-        if embedding_data is None:
-            raise ValueError("No embedding data found in response")
-        
-        # Convert to tensor
-        if isinstance(embedding_data[0], list):
-            # Multiple embeddings
-            embeddings = torch.tensor(embedding_data, dtype=torch.float32)
-        else:
-            # Single embedding
-            embeddings = torch.tensor([embedding_data], dtype=torch.float32)
-        
-        # Ensure correct dimensions
-        if embeddings.shape[1] != dimension:
-            # Resize if needed
-            if embeddings.shape[1] > dimension:
-                embeddings = embeddings[:, :dimension]
-            else:
-                # Pad with zeros
-                padding = torch.zeros((embeddings.shape[0], dimension - embeddings.shape[1]))
-                embeddings = torch.cat([embeddings, padding], dim=1)
-        
-        # Ensure we have embeddings for all texts
-        if embeddings.shape[0] < len(texts):
-            # Duplicate last embedding if needed
-            while embeddings.shape[0] < len(texts):
-                embeddings = torch.cat([embeddings, embeddings[-1:]], dim=0)
-        elif embeddings.shape[0] > len(texts):
-            embeddings = embeddings[:len(texts)]
-        
-        return embeddings
+            raise RuntimeError(error_msg)
     
     def _normalize_embeddings(self, embeddings):
-        """Normalize embedding vectors."""
+        """Normalize embedding vectors to unit length."""
         norms = torch.norm(embeddings, p=2, dim=1, keepdim=True)
         return embeddings / (norms + 1e-8)
     
-    def _generate_cache_key(self, texts, mode, dimension, pooling):
+    def _generate_cache_key(self, texts, dimensions, normalize):
         """Generate cache key for embeddings."""
         import hashlib
         text_str = "|".join(texts)
-        key_str = f"{text_str}_{mode}_{dimension}_{pooling}"
+        key_str = f"{text_str}_{dimensions}_{normalize}"
         return hashlib.md5(key_str.encode()).hexdigest()
     
     def _cleanup_cache(self):
         """Clean up cache if it gets too large."""
         if len(self._cache) > self._max_cache_size:
-            # Remove oldest entries
+            # Remove oldest entries (first half)
             items = list(self._cache.items())
             for key, _ in items[:len(items)//2]:
                 del self._cache[key]
@@ -296,8 +221,8 @@ Optimize for alignment with visual concepts and cross-modal similarity."""
         # [[embeddings, {}]] format expected by many nodes
         conditioning = [[embeddings, {}]]
         
-        # Create latent format
-        latent = {"samples": embeddings.unsqueeze(0)}  # Add batch dimension
+        # Create latent format (add batch dimension)
+        latent = {"samples": embeddings.unsqueeze(0)}
         
         # Get dimension
         dimension = embeddings.shape[1]
