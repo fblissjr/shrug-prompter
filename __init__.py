@@ -57,6 +57,13 @@ from .nodes.memory_cleanup import GlobalMemoryCleanup
 from .nodes.remote_text_encoder import RemoteTextEncoder
 from .nodes.seed_prompt_generator import SeedPromptGenerator
 
+# Two-Round VLM Processing
+from .nodes.two_round_vlm import (
+    TwoRoundVLMPrompter,
+    VLMStyleRewriter,
+    DualProviderConfig,
+)
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -132,6 +139,11 @@ NODE_CLASS_MAPPINGS = {
     # Creative and Encoding nodes
     "RemoteTextEncoder": RemoteTextEncoder,
     "SeedPromptGenerator": SeedPromptGenerator,
+    
+    # Two-Round VLM Processing
+    "TwoRoundVLMPrompter": TwoRoundVLMPrompter,
+    "VLMStyleRewriter": VLMStyleRewriter,
+    "DualProviderConfig": DualProviderConfig,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -179,6 +191,11 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Creative and Encoding nodes
     "RemoteTextEncoder": "Remote Text Encoder",
     "SeedPromptGenerator": "Seed Prompt Generator",
+    
+    # Two-Round VLM Processing
+    "TwoRoundVLMPrompter": "Two-Round VLM Prompter",
+    "VLMStyleRewriter": "VLM Style Rewriter",
+    "DualProviderConfig": "Dual Provider Config",
 }
 
 print(f"[Shrug-Prompter] Loaded {len(NODE_CLASS_MAPPINGS)} nodes")
