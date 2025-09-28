@@ -1,4 +1,4 @@
-# Shrug-Prompter
+# Shrug Nodes for ComfyUI
 
 Clean, memory-efficient VLM nodes for ComfyUI, with state management, looping, keyframe extraction, batching, and built-in templates for Wan2.1, VACE, and beyond.
 

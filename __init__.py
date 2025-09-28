@@ -64,6 +64,10 @@ from .nodes.two_round_vlm import (
     DualProviderConfig,
 )
 
+# Audio Nodes
+from .nodes.audio_utils import LoadAudio
+from .nodes.asr_prompter import ShrugASRNode
+
 
 # ===== notes to self after major refactor =====
 # old nodes to new nodes mappings:
@@ -113,16 +117,16 @@ NODE_CLASS_MAPPINGS = {
     # Utility Nodes
     "PromptTemplateLoader": PromptTemplateLoader,
     "LoopSafeAccumulator": LoopSafeAccumulator,
-    
+
     # Zero-copy Image nodes
     "VLMImagePassthrough": VLMImagePassthrough,
     "VLMImageResizer": VLMImageResizer,
-    
+
     # Type helpers
     "ImageToAny": ImageToAny,
     "TextListToString": TextListToString,
     "TextListIndexer": TextListIndexer,
-    
+
     # Text Cleanup
     "TextCleanup": TextCleanupNode,
     "TextListCleanup": TextListCleanupNode,
@@ -135,15 +139,19 @@ NODE_CLASS_MAPPINGS = {
 
     # Advanced nodes
     "AdvancedVLMSampler": AdvancedVLMSampler,
-    
+
     # Creative and Encoding nodes
     "RemoteTextEncoder": RemoteTextEncoder,
     "SeedPromptGenerator": SeedPromptGenerator,
-    
+
     # Two-Round VLM Processing
     "TwoRoundVLMPrompter": TwoRoundVLMPrompter,
     "VLMStyleRewriter": VLMStyleRewriter,
     "DualProviderConfig": DualProviderConfig,
+
+    # Audio Processing
+    "LoadAudio": LoadAudio,
+    "ShrugASRNode": ShrugASRNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -165,16 +173,16 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Utility Nodes
     "PromptTemplateLoader": "Prompt Template Loader",
     "LoopSafeAccumulator": "Loop Safe Accumulator",
-    
+
     # Zero-copy Image nodes
     "VLMImagePassthrough": "VLM Image Passthrough (Zero Copy)",
     "VLMImageResizer": "VLM Image Resizer (Minimal)",
-    
+
     # Type helpers
     "ImageToAny": "Image to Any Type",
     "TextListToString": "Text List to String",
     "TextListIndexer": "Text List Indexer",
-    
+
     # Text Cleanup
     "TextCleanup": "Text Cleanup",
     "TextListCleanup": "Text List Cleanup",
@@ -187,15 +195,19 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     # Advanced nodes
     "AdvancedVLMSampler": "Advanced VLM Sampler",
-    
+
     # Creative and Encoding nodes
     "RemoteTextEncoder": "Remote Text Encoder",
     "SeedPromptGenerator": "Seed Prompt Generator",
-    
+
     # Two-Round VLM Processing
     "TwoRoundVLMPrompter": "Two-Round VLM Prompter",
     "VLMStyleRewriter": "VLM Style Rewriter",
     "DualProviderConfig": "Dual Provider Config",
+
+    # Audio Processing
+    "LoadAudio": "Load Audio File",
+    "ShrugASRNode": "Shrug Speech-to-Text (ASR)",
 }
 
 print(f"[Shrug-Prompter] Loaded {len(NODE_CLASS_MAPPINGS)} nodes")
