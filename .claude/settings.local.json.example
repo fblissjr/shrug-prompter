@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_note": "COPY TO settings.local.json (gitignored) on the machine that runs ComfyUI. Verifies the V3 custom-node loader after any edit to nodes.py / __init__.py / client.py / media.py. On a box without ~/ComfyUI the hook no-ops (the [ -d ] guard), so symlinking the same file across machines is safe — but keeping it out of git avoids cross-host path assumptions.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'input=\"${CLAUDE_TOOL_INPUT:-}\"; if ! echo \"$input\" | grep -qE \"(^|/)((nodes|__init__|client|media)\\.py)\\b\"; then exit 0; fi; COMFY=\"${COMFYUI_HOME:-$HOME/ComfyUI}\"; if [ ! -d \"$COMFY\" ]; then exit 0; fi; cd \"$COMFY\" && python -c \"import asyncio, nodes as n; r=asyncio.run(n.load_custom_node(\\\"custom_nodes/shrug-prompter\\\", module_parent=\\\"custom_nodes\\\")); print(\\\"[shrug hook] ComfyUI loader: OK\\\" if r else \\\"[shrug hook] COMFYUI LOADER FAILED — node will not load at startup\\\"); exit(0 if r else 1)\" 2>&1'",
+            "timeout": 15000
+          }
+        ]
+      }
+    ]
+  }
+}

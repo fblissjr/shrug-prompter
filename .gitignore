@@ -1,0 +1,65 @@
+# --- shrug-prompter specific ---
+# Reference copies of code
+coderef/
+
+# Claude/agent scratch — track `.claude/skills` and `.claude/agents` so
+# project-wide dev skills travel with the repo; keep machine-specific
+# settings and anything in internal/ out of git.
+.claude/settings.local.json
+internal/
+
+# Templates scratch — keep templates/ tracked, but allow TEMP* / temp* drafts
+templates/TEMP*/
+templates/temp*/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+MANIFEST
+
+# Build / dist
+build/
+dist/
+.eggs/
+sdist/
+wheels/
+share/python-wheels/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# uv / pip — uv.lock IS tracked (reproducible installs)
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / coverage caches
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# Type checker caches
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Editor / IDE
+.ropeproject/
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

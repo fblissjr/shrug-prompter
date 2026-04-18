@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_note": "Machine-agnostic hooks tracked in git. Machine-specific hooks (e.g., the ComfyUI loader verification) live in settings.local.json which is gitignored.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'input=\"${CLAUDE_TOOL_INPUT:-}\"; if echo \"$input\" | grep -qE \"(^|/)uv\\.lock\\b\"; then echo \"[shrug hook] BLOCKED: uv.lock is machine-generated. Use uv sync / uv lock instead of editing it directly.\" >&2; exit 2; fi; if echo \"$input\" | grep -qE \"templates/styles/[^/]+\\.md\"; then echo \"[shrug hook] BLOCKED: templates/styles/*.md is a curated external set. Re-migrate from coderef/llm-dit-experiments/templates/z_image/ instead of hand-editing.\" >&2; exit 2; fi; exit 0'",
+            "timeout": 2000
+          }
+        ]
+      }
+    ]
+  }
+}
