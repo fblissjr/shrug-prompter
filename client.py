@@ -12,6 +12,7 @@ Auth model:
 
 from __future__ import annotations
 
+import asyncio
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable
@@ -81,6 +82,7 @@ class ShrugClient:
         self.admin_token = admin_token or None
         self.timeout = timeout
         self._http: httpx.AsyncClient | None = None
+        self._http_loop: asyncio.AbstractEventLoop | None = None
 
     def _inference_headers(self, content_type: str | None = "application/json") -> dict[str, str]:
         headers: dict[str, str] = {}
@@ -100,14 +102,44 @@ class ShrugClient:
         # Keep-alive across calls for the same ShrugClient instance. A new
         # ShrugClient is built per ComfyUI graph run, so TLS/TCP cost pays
         # off across all inference nodes in a single workflow.
-        if self._http is None or self._http.is_closed:
+        #
+        # ComfyUI spins up a fresh asyncio loop per prompt execution but may
+        # reuse a cached ShrugConnection output (and its ShrugClient) across
+        # runs. Pooled connections bound to the prior loop can't be cleaned
+        # up on the new loop — that surfaces as "Event loop is closed" on
+        # every other run. Track the loop the client was created on and
+        # drop it when it changes.
+        loop = asyncio.get_running_loop()
+        if self._http is None or self._http.is_closed or self._http_loop is not loop:
+            self._discard_http()
             self._http = httpx.AsyncClient(timeout=self.timeout)
+            self._http_loop = loop
         return self._http
+
+    def _discard_http(self) -> None:
+        """Release the previous httpx client without blocking the new loop.
+
+        In ComfyUI the old loop is almost always already closed by the time
+        we notice — its transports went down with it, so dropping the
+        reference is the whole job. If the old loop is somehow still alive
+        (tests, embedded use), best-effort schedule a clean aclose on it so
+        we don't leak sockets or leave httpx's __del__ to surface warnings.
+        """
+        old, old_loop = self._http, self._http_loop
+        self._http = None
+        self._http_loop = None
+        if old is None or old_loop is None or old_loop.is_closed():
+            return
+        try:
+            old_loop.call_soon_threadsafe(lambda: old_loop.create_task(old.aclose()))
+        except RuntimeError:
+            pass  # Loop died between is_closed() check and scheduling — drop.
 
     async def aclose(self) -> None:
         if self._http is not None:
             await self._http.aclose()
             self._http = None
+            self._http_loop = None
 
     async def _post_json(self, path: str, body: dict, headers: dict | None = None) -> dict:
         http = self._client()

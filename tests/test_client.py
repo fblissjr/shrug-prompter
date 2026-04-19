@@ -3,7 +3,9 @@
 All network IO is mocked with respx. No live server required.
 """
 
+import asyncio
 import io
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
@@ -366,6 +368,97 @@ class TestCacheControl:
         )
         await client.cache_clear()
         assert route.called
+
+
+class TestEventLoopReuse:
+    """ComfyUI spins up a fresh asyncio loop per prompt execution, but the
+    ShrugConnection node output (and its ShrugClient) can be cached across
+    runs. The persistent httpx.AsyncClient inside must not leak across loops,
+    or run N+1 blows up with 'Event loop is closed' while cleaning up stale
+    pooled connections from run N.
+    """
+
+    @respx.mock
+    def test_reuses_client_within_same_loop(self):
+        respx.post(f"{BASE_URL}/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200,
+                json={"choices": [{"message": {"content": "ok"}}]},
+            )
+        )
+        client = ShrugClient(base_url=BASE_URL, timeout=5.0)
+
+        async def two_calls():
+            await client.chat(
+                messages=[ChatMessage(role="user", content="a")], model="m"
+            )
+            first = client._http
+            await client.chat(
+                messages=[ChatMessage(role="user", content="b")], model="m"
+            )
+            return first, client._http
+
+        loop = asyncio.new_event_loop()
+        try:
+            first, second = loop.run_until_complete(two_calls())
+        finally:
+            loop.run_until_complete(client.aclose())
+            loop.close()
+        assert first is second, "httpx client should be reused within one loop"
+
+    @respx.mock
+    def test_recreates_client_when_loop_changes(self):
+        respx.post(f"{BASE_URL}/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200,
+                json={"choices": [{"message": {"content": "ok"}}]},
+            )
+        )
+        client = ShrugClient(base_url=BASE_URL, timeout=5.0)
+
+        async def one_call():
+            await client.chat(
+                messages=[ChatMessage(role="user", content="a")], model="m"
+            )
+            return client._http
+
+        loop_a = asyncio.new_event_loop()
+        try:
+            http_a = loop_a.run_until_complete(one_call())
+        finally:
+            loop_a.close()
+
+        loop_b = asyncio.new_event_loop()
+        try:
+            http_b = loop_b.run_until_complete(one_call())
+            assert http_a is not http_b, (
+                "stale client from closed loop must be discarded"
+            )
+        finally:
+            loop_b.run_until_complete(client.aclose())
+            loop_b.close()
+
+    @pytest.mark.parametrize(
+        "prior_loop_closed,expects_schedule",
+        [
+            (False, True),   # live old loop → schedule aclose on it
+            (True, False),   # dead old loop (the normal ComfyUI case) → drop silently
+        ],
+    )
+    async def test_discard_respects_prior_loop_liveness(
+        self, prior_loop_closed, expects_schedule
+    ):
+        client = ShrugClient(base_url=BASE_URL, timeout=5.0)
+        client._http = MagicMock()
+        client._http.is_closed = False
+        prior_loop = MagicMock()
+        prior_loop.is_closed.return_value = prior_loop_closed
+        client._http_loop = prior_loop
+
+        # Current (pytest) loop differs from prior_loop → triggers discard.
+        new_http = client._client()
+        assert client._http is new_http
+        assert prior_loop.call_soon_threadsafe.called is expects_schedule
 
 
 class TestExtractThinking:

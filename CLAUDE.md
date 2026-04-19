@@ -16,7 +16,9 @@ Four Python files, ~1,600 LOC total:
 - **`client.py`** — async `ShrugClient` with one method per endpoint:
   `chat`, `chat_multipart`, `chat_batch`, `embed`, `transcribe`, `models`,
   `capabilities`, `cache_list`, `cache_clear`. Owns one persistent
-  `httpx.AsyncClient` per instance (TCP/TLS reuse across a workflow run).
+  `httpx.AsyncClient` per instance, rebound when the running asyncio loop
+  changes (TCP/TLS reuse across a workflow run without leaking across
+  ComfyUI's per-run loop boundary — see "Per-loop httpx client" below).
   Uses `orjson` (not stdlib json). Handles Qwen3 `<think>` block extraction.
 - **`media.py`** — tensor ↔ bytes. `tensor_batch_to_jpeg_bytes`,
   `tensor_to_data_url_list` (OpenAI chat format), `audio_dict_to_wav_bytes`
@@ -103,6 +105,14 @@ See `templates/README.md` for the frontmatter spec.
 - **Single-user** — no retries, no capability TTL cache. Server is close
   and usually up; fail fast. The one exception: ShrugClient keeps a
   persistent httpx.AsyncClient for TCP/TLS reuse across a workflow.
+- **Per-loop httpx client** — ComfyUI starts a fresh asyncio loop per
+  prompt execution but caches node outputs (including `ShrugConnection`
+  and its `ShrugClient`) across runs when inputs are unchanged. The
+  persistent `httpx.AsyncClient` must NOT cross a loop boundary, or pool
+  cleanup on the new loop calls back into the dead old loop and raises
+  `Event loop is closed` on every other run. `ShrugClient._client()`
+  tracks `_http_loop` and rebuilds when the running loop differs.
+  Don't collapse the guard back to just `is_closed`.
 - **Dual-form sibling imports in `nodes.py`** —
   `try: from .client import …; except ImportError: from client import …`.
   Don't collapse to one form: the try path is what ComfyUI uses (nodes.py
